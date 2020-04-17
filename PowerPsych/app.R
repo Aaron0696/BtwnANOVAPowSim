@@ -60,6 +60,10 @@ progress <- 0
 ui <- fluidPage(
     sidebarLayout(
         sidebarPanel(
+            actionButton(
+                "update",
+                label = "Calculate"
+            ),
             selectInput(
                 "alys",
                 label = h3("Analysis"),
@@ -118,13 +122,30 @@ server <- function(input, output) {
     tracker <- data.frame(MainEffect = c("X1"),
                           Count = c(0))
     
+    params <- reactiveValues(sampsize = 100,
+                             g1mean = 1,
+                             g2mean = 2,
+                             g1sd = 1,
+                             g2sd = 1,
+                             iter = 100)
+    
+    observeEvent(input$update,{
+        
+        params$sampsize <- input$sampsize
+        params$g1mean <- input$g1mean
+        params$g2mean <- input$g2mean
+        params$g1sd <- input$g1sd
+        params$g2sd <- input$g2sd
+        params$iter <- input$iter
+    })
+    
     output$power <- renderDataTable({
         
         # loop
-        for (i in 1:input$iter){
-            tracker$Count[1] <- tracker$Count[1] + anova1way(n = input$sampsize, 
-                                                             means = c(input$g1mean, input$g2mean), 
-                                                             sds = c(input$g1sd, input$g2sd), 
+        for (i in 1:params$iter){
+            tracker$Count[1] <- tracker$Count[1] + anova1way(n = params$sampsize, 
+                                                             means = c(params$g1mean, params$g2mean), 
+                                                             sds = c(params$g1sd, params$g2sd), 
                                                              num.grp = 2)
             progress <- progress + 1
             # print(paste0(progress,
