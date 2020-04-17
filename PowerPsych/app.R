@@ -1,21 +1,7 @@
 library(shiny)
 library(semTools)
 library(car)
-
-n <- 1000
-num.grp <- 2
-mean.g1 <- 3
-mean.g2 <- 4
-iteration <- 100
-means <- c(0,1)
-sds <- c(2.5,2.5)
-
-# counter
-counter <- 0
-
-# vector 
-tracker <- data.frame(MainEffect = c("X1"),
-                      Count = c(0))
+library(DT)
 
 anova1way <- function(n, means, sds, num.grp) {
     for (r in 1:num.grp) {
@@ -69,76 +55,88 @@ anova1way <- function(n, means, sds, num.grp) {
 
 # progress "bar"
 progress <- 0
-# loop
-for (i in 1:iterations){
-    tracker$Count[1] <- tracker$Count[1] + anova1way(n = n, means = means, sds = sds, num.grp = num.grp)
-    progress <- progress + 1
-    print(paste0(progress,
-                " out of ",
-                iterations,
-                " iterations completed!"))
-}
-
-
-# a function that generates data based on the model selected by the user from the user-interface
-# and conducts the analysis
-genAnalyze <- function(model){
-    
-    
-    
-    
-}
-
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
-    
-    selectInput("alys", 
-                label = h3("Analysis"), 
-                choices = list("One-Way ANOVA" = "ANV1", 
-                               "Two-Way ANOVA" = "ANV2", 
-                               "Multiple Regression" = "MR",
-                               "Multiple Regression With Interaction" = "MRWI"), 
-                selected = "None"),
-    
-    numericInput("numIV", 
-                 label = h3("Number Of Independent Variables"),
-                 value = 1),
-    numericInput("Total Sample Size", 
-                 label = h3("Number Of Independent Variables"),
-                 value = 1)
-)
+    sidebarLayout(
+        sidebarPanel(
+            selectInput(
+                "alys",
+                label = h3("Analysis"),
+                choices = list(
+                    "One-Way ANOVA" = "ANV1",
+                    "Two-Way ANOVA" = "ANV2",
+                    "Multiple Regression" = "MR",
+                    "Multiple Regression With Interaction" = "MRWI"
+                ),
+                selected = "None"
+            ),
+            numericInput(
+                "numIV",
+                label = h3("Number Of Independent Variables"),
+                value = 1
+            ),
+            numericInput(
+                "sampsize",
+                label = h3("Sample Size Per Group"),
+                value = 100
+            ),
+            numericInput(
+                "g1mean",
+                label = h3("Mean Of Group 1"),
+                value = 1
+            ),
+            numericInput(
+                "g2mean",
+                label = h3("Mean Of Group 2"),
+                value = -1
+            ),
+            numericInput(
+                "g1sd",
+                label = h3("SD Of Group 1"),
+                value = 1
+            ),
+            numericInput(
+                "g2sd",
+                label = h3("SD Of Group 2"),
+                value = 1
+            ),
+            numericInput(
+                "iter",
+                label = h3("Number Of Iterations"),
+                value = 100
+            )
+        ),
+        mainPanel(
+            dataTableOutput(outputId = "power")
+        )
+    ))
 
 server <- function(input, output) {
     
+    # tracker
+    tracker <- data.frame(MainEffect = c("X1"),
+                          Count = c(0))
     
-    data <- reactive({
+    output$power <- renderDataTable({
         
+        # loop
+        for (i in 1:input$iter){
+            tracker$Count[1] <- tracker$Count[1] + anova1way(n = input$sampsize, 
+                                                             means = c(input$g1mean, input$g2mean), 
+                                                             sds = c(input$g1sd, input$g2sd), 
+                                                             num.grp = 2)
+            progress <- progress + 1
+            # print(paste0(progress,
+            #              " out of ",
+            #              iterations,
+            #              " iterations completed!"))
+        }
         
-                   
-    })
-
-    output$distPlot <- renderPlot({
-        data <-  data.frame(DV = c(rnorm(100,
-                                         mean = 0.5,
-                                         sd = 1),
-                                   rnorm(100,
-                                         mean = 0,
-                                         sd = 1)),
-                            Grp = c(rep(0,100),
-                                    rep(1,100)))
-        pvalue <- summary(lm(DV ~ Grp, 
-                             data = data))[["coefficients"]][,4]
-        
-        
-        # generate bins based on input$bins from ui.R
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-
-        # draw the histogram with the specified number of bins
-        hist(x, breaks = bins, col = 'darkgray', border = 'white')
+        tracker
     })
 }
 
 # Run the application 
 shinyApp(ui = ui, server = server)
+
