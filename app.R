@@ -64,6 +64,17 @@ anova1way <- function(means, sds, grpsize, num.grp){
 ui <- fluidPage(
     theme = shinytheme("flatly"),
     titlePanel(h1("One-Way ANOVA Power Simulator")),
+    wellPanel("This is a personal project for myself and it is essentially a power simulator for One-Way ANOVAs.",
+              br(),
+              "In experiments, power is usually defined as the probability that an effect would be statistically significant given that the effect truly exists.",
+              br(),
+              "There are formulas to calculate power but these formulas assume that certain assumptions are met. A less restrictive approach to calculating power is to draw a sample from a known population where the effect is present, test the hypothesis and repeat this multiple times (iterations). Count the relative frequency that a statistically significant effect was observed and that is power.",
+              br(),
+              "For example, I generated samples of n = 100 each while assuming that the effect existed. If 600 out of 1000 iterations produced a statistically significant effect, my estimated power would be 0.6.",
+              br(),
+              "The downside to this simulation-based approach is that an intermediate level of scripting is needed, which may gatekeep users from accessing this technique. This RShiny was created to allow users of all scripting level to perform such simulations.",
+              br(),
+              tags$code("For those who are seeing this now, I am still testing things out, so if there are any comments on how it can be further improved (aesthetics, features, user-experience, bugs), do tell me. I plan to extend this to include Two-Way ANOVAs and Multiple Regression once I got the bugs, features and aesthetics down.")),
     fluidRow(
         column(4,
                wellPanel(
@@ -74,19 +85,25 @@ ui <- fluidPage(
                    "The seed ensures that the simulation is replicable, it is ideal to record down the seed utilized. Any sufficiently-large number can be used for the seed.",
                    sliderInput("numgrps", label = h3("Number Of Groups"), min = 2, max = 9, value = 2),
                    "The number of levels your independent variable possesses. Or the number of groups you have in your design.",
-                   hr(),
-                   actionButton("update", label = "Run!"),
-                   hr(),
-                   "Click Run! when you are satisfied with your settings and are ready to begin the simulation. The output will appear below, the application may take a while so hang tight!"
                )),
-        column(wellPanel(h3("Group Means"), uiOutput("grpmeans")), width = 2),
-        column(wellPanel(h3("Group SDs"), uiOutput("grpsds")), width = 2),
-        column(wellPanel(h3("Group Size"), uiOutput("grpsize")), width = 2)
+        column(wellPanel(h3("Group Means"), 
+                         "Input the unstandardized group means here, larger differences between means lead to higher power.",
+                         uiOutput("grpmeans")), width = 2),
+        column(wellPanel(h3("Group SDs"), 
+                         "Input the group standard deviations (SDs) here, smaller SDs between means lead to higher power.",
+                         uiOutput("grpsds")), width = 2),
+        column(wellPanel(h3("Group Size"), 
+                         "Input the group sizes here, equal group sizes are ideal to maximize power.",
+                         uiOutput("grpsize")), width = 2),
+        column(wellPanel(h3("All Done?"),
+                         "Click Run! when you are satisfied with your settings and are ready to begin the simulation. The output will appear below, the application may take a while so hang tight!",
+                         hr(),
+                         actionButton("update", label = "Run!")), width = 2)
     ),
     hr(),
     titlePanel("Output"),
     fluidRow(
-                column(verbatimTextOutput(outputId = "power"), offset = 0, width = 6),
+                column(verbatimTextOutput(outputId = "power"), offset = 0, width = 6)
     )
 )
 
@@ -98,7 +115,7 @@ server <- function(input, output) {
         lapply(1:numgrps, function(i) {
             numericInput(paste0("g",i,"mean"),
                         label = paste0("Mean Of Group ", i),
-                        value = 1)
+                        value = i/2)
         })
     })
     
@@ -312,7 +329,7 @@ server <- function(input, output) {
         sizeform <- paste0("c(", sizeform, ")")
         
         if(input$update == 0){
-            print("Please input parameters and press the Calculate button.")
+            print("Please input parameters and press the Run! button.")
         } else {
 
             # loop repeating anova1way() with appropriate parameters for the number of
