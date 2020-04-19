@@ -1,3 +1,4 @@
+# load packages
 if (require('shiny') == FALSE){
     install.packages('shiny')
 }
@@ -18,7 +19,7 @@ if (require('shinythemes') == FALSE){
 }
 library(shinythemes)
 
-anova1way <- function(means, sds, grpsize, num.grp){
+anova1way <- function(means, sds, grpsize, num.grp, alphalvl = 0.05){
     
     # simulate data for each group
     for (r in 1:num.grp) {
@@ -58,11 +59,12 @@ anova1way <- function(means, sds, grpsize, num.grp){
                          X1 = X)
     # save the p-value of the main effect from the 1-WAY ANOVA
     anova.results <- Anova(lm(Y ~ X1,
-                              data = alldat))[1,4]
+                              # use type II for now
+                              data = alldat), type = 2)[1,4]
     
     # if the p value is statistically significant, let sig = 1,
     # else sig = 0
-    if (anova.results < 0.05) {
+    if (anova.results < alphalvl) {
         sig <- 1
     } else {
         sig <- 0
@@ -97,6 +99,8 @@ ui <- fluidPage(
                    "The option above determines the number of iteration for the simulation, please note that selecting larger number of iterations will increase computational time.",
                    numericInput("seed", label = h3("Set Seed For Replicability"), value = 123456),
                    "The seed ensures that the simulation is replicable, it is ideal to record down the seed utilized. Any sufficiently-large number can be used for the seed.",
+                   sliderInput("alphalevel", label = h3("Alpha"), min = 0.001, max = 0.999, value = 0.05, step = 0.001),
+                   "This is the alpha level used for significance testing, defaults to 0.05.",
                    sliderInput("numgrps", label = h3("Number Of Groups"), min = 2, max = 9, value = 2),
                    "The number of levels your independent variable possesses. Or the number of groups you have in your design.",
                )),
@@ -169,6 +173,7 @@ server <- function(input, output) {
         params$iter <- input$iter
         params$numgrps <- input$numgrps
         params$seed <- input$seed
+        params$alpha <- input$alphalevel
         
         if(input$numgrps == 2){
             params$g1mean <- input$g1mean
@@ -353,7 +358,8 @@ server <- function(input, output) {
                     tracker$NumSig[1] <- tracker$NumSig[1] + anova1way(means = eval(parse(text = meanform)), 
                                                                      sds = eval(parse(text = sdform)), 
                                                                      grpsize = eval(parse(text = sizeform)),
-                                                                     num.grp = params$numgrps)
+                                                                     num.grp = params$numgrps,
+                                                                     alphalvl = params$alpha)
                     # progress <- progress + 1
                     # print(paste0(progress, " out of ", params$iter, " iterations completed!"))
             }
