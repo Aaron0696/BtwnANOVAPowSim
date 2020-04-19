@@ -62,25 +62,43 @@ anova1way <- function(n, means, sds, num.grp){
 ui <- fluidPage(
     title = "One-Way ANOVA",
     fluidRow(
-        column(2,
-               numericInput("sampsize", label = h3("Sample Size Per Group"), value = 100),
-               numericInput("iter",label = h3("Number Of Iterations"), value = 100)
-               ),
-        column(2,
-               numericInput("g1mean", label = h3("Mean Of Group 1"), value = 1),
-               numericInput("g1sd", label = h3("SD Of Group 1"), value = 1),
-               ),
-        column(2,
-               numericInput("g2mean",label = h3("Mean Of Group 2"), value = -1),
-               numericInput("g2sd", label = h3("SD Of Group 2"), value = 1),
-               actionButton("update", label = "Calculate"))
+        column(4,
+               wellPanel(
+                   numericInput("sampsize", label = h3("Sample Size Per Group"), value = 100),
+                   numericInput("iter",label = h3("Number Of Iterations"), value = 100),
+                   sliderInput("numgrps", label = h3("Number Of Groups"), min = 2, max = 9, value = 2),
+                   actionButton("update", label = "Calculate")
+               )),
     ),
     hr(),
-    column(verbatimTextOutput(outputId = "power"), offset = 4, width = 4)
+    fluidRow(
+        column(wellPanel(h3("Group Means"), uiOutput("grpmeans")), width = 2),
+        column(wellPanel(h3("Group SDs"), uiOutput("grpsds")), width = 2),
+        column(verbatimTextOutput(outputId = "power"), offset = 0, width = 6),
+    )
 )
 
 
 server <- function(input, output) {
+    
+    output$grpmeans <- renderUI({
+        numgrps <- as.integer(input$numgrps)
+        lapply(1:numgrps, function(i) {
+            numericInput(paste0("g",i,"mean"),
+                        label = paste0("Mean Of Group ", i),
+                        value = 1)
+        })
+    })
+    
+    output$grpsds <- renderUI({
+        numgrps <- as.integer(input$numgrps)
+        lapply(1:numgrps, function(i) {
+            numericInput(paste0("g",i,"sd"),
+                         label = paste0("SD Of Group ", i),
+                         value = 1)
+        })
+    })
+    
     
     # tracker is the object which will keep track of how many time the
     # main effect of X1 was statistically significant
@@ -88,23 +106,130 @@ server <- function(input, output) {
                           Count = c(0))
     # create params, a list of reactive values that will create the interactivity of
     # the app
-    params <- reactiveValues(sampsize = 100,
-                             g1mean = 1,
-                             g2mean = 2,
-                             g1sd = 1,
-                             g2sd = 1,
-                             iter = 100)
+    params <- reactiveValues(numgrps = 2)
     
     # ensure that the results only update when the calculate
     # button is pressed and input$update is invalidated
+    # browser()
     observeEvent(input$update,{
-        
+    
         params$sampsize <- input$sampsize
-        params$g1mean <- input$g1mean
-        params$g2mean <- input$g2mean
-        params$g1sd <- input$g1sd
-        params$g2sd <- input$g2sd
         params$iter <- input$iter
+        params$numgrps <- input$numgrps
+        
+        if(input$numgrps == 2){
+            params$g1mean <- input$g1mean
+            params$g2mean <- input$g2mean
+            params$g1sd <- input$g1sd
+            params$g2sd <- input$g2sd
+        }
+        
+        if(input$numgrps == 3){
+            params$g1mean <- input$g1mean
+            params$g2mean <- input$g2mean
+            params$g3mean <- input$g3mean
+            params$g1sd <- input$g1sd
+            params$g2sd <- input$g2sd
+            params$g3sd <- input$g3sd
+        }
+        
+        if(input$numgrps == 4){
+            params$g1mean <- input$g1mean
+            params$g2mean <- input$g2mean
+            params$g3mean <- input$g3mean
+            params$g4mean <- input$g4mean
+            params$g1sd <- input$g1sd
+            params$g2sd <- input$g2sd
+            params$g3sd <- input$g3sd
+            params$g4sd <- input$g4sd
+        }
+        
+        if(input$numgrps == 5){
+            params$g1mean <- input$g1mean
+            params$g2mean <- input$g2mean
+            params$g3mean <- input$g3mean
+            params$g4mean <- input$g4mean
+            params$g5mean <- input$g5mean
+            params$g1sd <- input$g1sd
+            params$g2sd <- input$g2sd
+            params$g3sd <- input$g3sd
+            params$g4sd <- input$g4sd
+            params$g5sd <- input$g5sd
+        }
+        
+        if(input$numgrps == 6){
+            params$g1mean <- input$g1mean
+            params$g2mean <- input$g2mean
+            params$g3mean <- input$g3mean
+            params$g4mean <- input$g4mean
+            params$g5mean <- input$g5mean
+            params$g6mean <- input$g6mean
+            params$g1sd <- input$g1sd
+            params$g2sd <- input$g2sd
+            params$g3sd <- input$g3sd
+            params$g4sd <- input$g4sd
+            params$g5sd <- input$g5sd
+            params$g6sd <- input$g6sd
+            
+        }
+        
+        if(input$numgrps == 7){
+            params$g1mean <- input$g1mean
+            params$g2mean <- input$g2mean
+            params$g3mean <- input$g3mean
+            params$g4mean <- input$g4mean
+            params$g5mean <- input$g5mean
+            params$g6mean <- input$g6mean
+            params$g7mean <- input$g7mean
+            params$g1sd <- input$g1sd
+            params$g2sd <- input$g2sd
+            params$g3sd <- input$g3sd
+            params$g4sd <- input$g4sd
+            params$g5sd <- input$g5sd
+            params$g6sd <- input$g6sd
+            params$g7sd <- input$g7sd
+        }
+        
+        if(input$numgrps == 8){
+            params$g1mean <- input$g1mean
+            params$g2mean <- input$g2mean
+            params$g3mean <- input$g3mean
+            params$g4mean <- input$g4mean
+            params$g5mean <- input$g5mean
+            params$g6mean <- input$g6mean
+            params$g7mean <- input$g7mean
+            params$g8mean <- input$g8mean
+            params$g1sd <- input$g1sd
+            params$g2sd <- input$g2sd
+            params$g3sd <- input$g3sd
+            params$g4sd <- input$g4sd
+            params$g5sd <- input$g5sd
+            params$g6sd <- input$g6sd
+            params$g7sd <- input$g7sd
+            params$g8sd <- input$g8sd
+        }
+        
+        if(input$numgrps == 9){
+            params$g1mean <- input$g1mean
+            params$g2mean <- input$g2mean
+            params$g3mean <- input$g3mean
+            params$g4mean <- input$g4mean
+            params$g5mean <- input$g5mean
+            params$g6mean <- input$g6mean
+            params$g7mean <- input$g7mean
+            params$g8mean <- input$g8mean
+            params$g9mean <- input$g9mean
+            params$g1sd <- input$g1sd
+            params$g2sd <- input$g2sd
+            params$g3sd <- input$g3sd
+            params$g4sd <- input$g4sd
+            params$g5sd <- input$g5sd
+            params$g6sd <- input$g6sd
+            params$g7sd <- input$g7sd
+            params$g8sd <- input$g8sd
+            params$g9sd <- input$g9sd
+        }
+        
     })
     
     # the main output, which is a dataframe but looks nicer when printed
@@ -112,18 +237,29 @@ server <- function(input, output) {
         
         # a progress counter
         progress <- 0
+
+        meanform <- paste0("params$g", 1:params$numgrps, "mean", collapse = ",")
+        meanform <- paste0("c(", meanform, ")")
+        sdform <- paste0("params$g", 1:params$numgrps, "sd", collapse = ",")
+        sdform <- paste0("c(", sdform, ")")
         
-        # loop repeating anova1way() with appropriate parameters for the number of
-        # iterations specified by the user
-        for (i in 1:params$iter){
-            tracker$Count[1] <- tracker$Count[1] + anova1way(n = params$sampsize, 
-                                                             means = c(params$g1mean, params$g2mean), 
-                                                             sds = c(params$g1sd, params$g2sd), 
-                                                             num.grp = 2)
-            progress <- progress + 1
-            # print(paste0(progress, " out of ", params$iter, " iterations completed!"))
+        if(input$update == 0){
+            print("Please input parameters and press the Calculate button.")
+        } else {
+
+            # loop repeating anova1way() with appropriate parameters for the number of
+            # iterations specified by the user    
+            for(i in 1:params$iter){
+                    tracker$Count[1] <- tracker$Count[1] + anova1way(n = params$sampsize, 
+                                                                     means = eval(parse(text = meanform)), 
+                                                                     sds = eval(parse(text = sdform)), 
+                                                                     num.grp = params$numgrps)
+                    # progress <- progress + 1
+                    # print(paste0(progress, " out of ", params$iter, " iterations completed!"))
+                }
+
+            tracker
         }
-        tracker
     })
 }
 
