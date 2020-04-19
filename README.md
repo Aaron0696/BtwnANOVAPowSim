@@ -1,2 +1,2 @@
 # PowerPsych
-A power calculator for psychological analysis.
+A power calculator for psychological analysis. More coming soon...
