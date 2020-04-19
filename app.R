@@ -1,7 +1,21 @@
+if (require('shiny') == FALSE){
+    install.packages('shiny')
+}
 library(shiny)
+
+if (require('semTools') == FALSE){
+    install.packages('semTools')
+}
 library(semTools)
+
+if (require('car') == FALSE){
+    install.packages('car')
+}
 library(car)
-library(DT)
+
+if (require('shinythemes') == FALSE){
+    install.packages('shinythemes')
+}
 library(shinythemes)
 
 anova1way <- function(means, sds, grpsize, num.grp){
