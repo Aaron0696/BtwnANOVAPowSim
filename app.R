@@ -78,7 +78,7 @@ anova1way <- function(means, sds, grpsize, num.grp, alphalvl = 0.05){
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
-    theme = shinytheme("flatly"),
+    theme = shinytheme("lumen"),
     titlePanel(h1("One-Way ANOVA Power Simulator")),
     wellPanel("This is a personal project for myself and it is essentially a power simulator for One-Way ANOVAs.",
               br(),
@@ -91,6 +91,13 @@ ui <- fluidPage(
               "The downside to this simulation-based approach is that an intermediate level of scripting is needed, which may gatekeep users from accessing this technique. This RShiny was created to allow users of all scripting level to perform such simulations.",
               br(),
               tags$code("For those who are seeing this now, I am still testing things out, so if there are any comments on how it can be further improved (aesthetics, features, user-experience, bugs), do tell me. I plan to extend this to include Two-Way ANOVAs and Multiple Regression once I got the bugs, features and aesthetics down.")),
+    fluidRow(
+        column(conditionalPanel(condition = "input.update != 0",
+                                h2("Output"),
+                                verbatimTextOutput(outputId = "power")), 
+               offset = 0, width = 12)
+    ),
+    hr(),
     fluidRow(
         column(4,
                wellPanel(
@@ -117,12 +124,8 @@ ui <- fluidPage(
                          "Click Run! when you are satisfied with your settings and are ready to begin the simulation. The output will appear below, the application may take a while so hang tight!",
                          hr(),
                          actionButton("update", label = "Run!")), width = 2)
-    ),
-    hr(),
-    titlePanel("Output"),
-    fluidRow(
-                column(verbatimTextOutput(outputId = "power"), offset = 0, width = 6)
     )
+    
 )
 
 
@@ -348,7 +351,7 @@ server <- function(input, output) {
         sizeform <- paste0("c(", sizeform, ")")
         
         if(input$update == 0){
-            print("Please input parameters and press the Run! button.")
+            print("Loading!")
         } else {
 
             # loop repeating anova1way() with appropriate parameters for the number of
@@ -366,7 +369,8 @@ server <- function(input, output) {
             tracker$NumIterations <- params$iter
             rownames(tracker) <- "Main Effect"
             tracker$Power <- tracker$NumSig / tracker$NumIterations
-            tracker
+            paste0(params$iter, " iterations were simulated and ", tracker$NumSig, " iterations had statistically significant main effects."," The simulated power for the overall main effect is ", tracker$Power, ".")
+            
         }
     })
 }
