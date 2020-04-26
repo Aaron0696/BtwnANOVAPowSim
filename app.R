@@ -1,8 +1,8 @@
 # load packages
-if (require('shiny') == FALSE){
-    install.packages('shiny')
+if (require('shinydashboard') == FALSE){
+    install.packages('shinydashboard')
 }
-library(shiny)
+library(shinydashboard)
 
 if (require('semTools') == FALSE){
     install.packages('semTools')
@@ -18,6 +18,17 @@ if (require('shinythemes') == FALSE){
     install.packages('shinythemes')
 }
 library(shinythemes)
+
+if (require('ggplot2') == FALSE){
+    install.packages('ggplot2')
+}
+library(ggplot2)
+
+if (require('plotly') == FALSE){
+    install.packages('plotly')
+}
+library(plotly)
+
 
 anova1way <- function(means, sds, grpsize, num.grp, alphalvl = 0.05){
     
@@ -76,6 +87,47 @@ anova1way <- function(means, sds, grpsize, num.grp, alphalvl = 0.05){
     return(sig)
 }
 
+anova1way.sim <- function(means, sds, grpsize, num.grp){
+    
+    # simulate data for each group
+    for (r in 1:num.grp) {
+        # create the model formula to be used in simulateData(model = ...)
+        # assign the model formula to an object called grp*.model,
+        # where * is 1 for group 1 and so on...
+        assign(paste0("grp", r, ".model"),
+               paste0("y ~ ", means[r], "*1", "\n y ~~ ", sds[r] ^ 2, "*y"))
+        
+        # run simulateData() and save the simulated dataset into an object called 
+        # data.g*, where * is 1 for group 1 and so on...
+        assign(paste0("data.g", r),
+               simulateData(eval(parse(
+                   text = paste0("grp", r, ".model")
+               )),
+               sample.nobs = grpsize[r]
+               ))
+    }
+    
+    # retrieve the names of all objects in the environment with the suffix data.g
+    alldata.obs <- ls(pattern = "^data.g")
+    # create command needed to create the overall dataframe, consisting of data from each group
+    # alldat.formula would take the form of "data.g1[,1], data.g2[,2]"
+    alldat.formula <- paste0(alldata.obs, "[,1]", collapse = ",")
+    # wrap alldat.formula in c( and ) to complete the command
+    alldat.formula <- paste0("c(", alldat.formula, ")")
+    
+    # create a vector X to be used as a dummy variable to indicate the groups of
+    # each row of the results in alldat, created later on...
+    X <- c()
+    for (r in 1:num.grp) {
+        X <- append(X, rep(paste(r), grpsize[r]))
+    }
+    
+    # alldat is the overall dataframe that contains the data of all the groups
+    alldat <- data.frame(Y = eval(parse(text = alldat.formula)),
+                         X1 = X)
+}
+
+
 # Define UI for application that draws a histogram
 ui <- fluidPage(
     theme = shinytheme("lumen"),
@@ -93,9 +145,8 @@ ui <- fluidPage(
               tags$code("For those who are seeing this now, I am still testing things out, so if there are any comments on how it can be further improved (aesthetics, features, user-experience, bugs), do tell me. I plan to extend this to include Two-Way ANOVAs and Multiple Regression once I got the bugs, features and aesthetics down.")),
     fluidRow(
         column(conditionalPanel(condition = "input.update != 0",
-                                h2("Output"),
-                                verbatimTextOutput(outputId = "power")), 
-               offset = 0, width = 12)
+                                valueBoxOutput("power")), 
+               offset = 0, width = 4)
     ),
     hr(),
     fluidRow(
@@ -341,10 +392,7 @@ server <- function(input, output) {
     })
     
     # the main output, which is a dataframe but looks nicer when printed
-    output$power <- renderPrint({
-        
-        # a progress counter
-        progress <- 0
+    output$power <- renderValueBox({
 
         meanform <- paste0("params$g", 1:params$numgrps, "mean", collapse = ",")
         meanform <- paste0("c(", meanform, ")")
@@ -354,7 +402,9 @@ server <- function(input, output) {
         sizeform <- paste0("c(", sizeform, ")")
         
         if(input$update == 0){
-            print("Loading!")
+            valueBox(value = "Computing!",
+                     subtitle = "",
+                     width = 4)
         } else {
 
             # loop repeating anova1way() with appropriate parameters for the number of
@@ -372,9 +422,48 @@ server <- function(input, output) {
             tracker$NumIterations <- params$iter
             rownames(tracker) <- "Main Effect"
             tracker$Power <- tracker$NumSig / tracker$NumIterations
-            paste0(params$iter, " iterations were simulated and ", tracker$NumSig, " iterations had statistically significant main effects."," The simulated power for the overall main effect is ", tracker$Power, ".")
-            
+            # paste0(params$iter, " iterations were simulated and ", tracker$NumSig, " iterations had statistically significant main effects."," The simulated power for the overall main effect is ", tracker$Power, ".")
+            valueBox(value = "The Simulated Power is...",
+                     subtitle = h2(tracker$Power),
+                     width = 4
+                     )
         }
+    })
+    
+    output$graph <- renderPlot({
+        
+        meanform <- paste0("params$g", 1:params$numgrps, "mean", collapse = ",")
+        meanform <- paste0("c(", meanform, ")")
+        sdform <- paste0("params$g", 1:params$numgrps, "sd", collapse = ",")
+        sdform <- paste0("c(", sdform, ")")
+        sizeform <- paste0("params$g", 1:params$numgrps, "size", collapse = ",")
+        sizeform <- paste0("c(", sizeform, ")")
+        
+        data <- anova1way.sim(means = eval(parse(text = meanform)), 
+                  sds = eval(parse(text = sdform)), 
+                  grpsize = rep(500, params$numgrps),
+                  num.grp = params$numgrps)
+        
+        myplot <- ggplot(data = data, aes(x = Y, fill = X1, label = X1)) + 
+            geom_density(alpha = 0.4, color = "black", size = 0.8)
+        plotdetails <- ggplot_build(myplot)
+        # get the maximum density of each group
+        grpmax <- aggregate(ymax ~ group,
+                  data = plotdetails[["data"]][[1]],
+                  FUN = max)
+        # get the average of each group
+        grpmax$mean <- aggregate(Y ~ X1,
+                            data = data,
+                            FUN = mean)$Y
+        grpmax$group <- as.ordered(grpmax$group)
+        ggplotly(ggplot(data = data, aes(x = Y, fill = X1, label = X1)) + 
+            geom_density(alpha = 0.4, color = "black", size = 0.8) + 
+            geom_vline(data = grpmax, aes(xintercept = mean, color = group, label = group), size = 1, lty = "dashed"))
+        
+            # STOP HERE
+        
+        
+
     })
 }
 
