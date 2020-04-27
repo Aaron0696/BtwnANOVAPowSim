@@ -146,7 +146,8 @@ ui <- fluidPage(
     fluidRow(
         column(conditionalPanel(condition = "input.update != 0",
                                 valueBoxOutput("power")), 
-               offset = 0, width = 4)
+               offset = 0, width = 4),
+        column(plotlyOutput("graph"), width = 5)
     ),
     hr(),
     fluidRow(
@@ -430,7 +431,7 @@ server <- function(input, output) {
         }
     })
     
-    output$graph <- renderPlot({
+    output$graph <- renderPlotly({
         
         meanform <- paste0("params$g", 1:params$numgrps, "mean", collapse = ",")
         meanform <- paste0("c(", meanform, ")")
@@ -439,28 +440,41 @@ server <- function(input, output) {
         sizeform <- paste0("params$g", 1:params$numgrps, "size", collapse = ",")
         sizeform <- paste0("c(", sizeform, ")")
         
-        data <- anova1way.sim(means = eval(parse(text = meanform)), 
-                  sds = eval(parse(text = sdform)), 
-                  grpsize = rep(500, params$numgrps),
-                  num.grp = params$numgrps)
+        if(input$update == 0){
+            plotly()
+        } else {
+            
+            data <- anova1way.sim(means = eval(parse(text = meanform)), 
+                                  sds = eval(parse(text = sdform)), 
+                                  grpsize = rep(500, params$numgrps),
+                                  num.grp = params$numgrps)
+            
+            myplot <- ggplot(data = data, aes(x = Y, fill = X1, label = X1)) + 
+                geom_density(alpha = 0.4, color = "black", size = 0.8)
+            plotdetails <- ggplot_build(myplot)
+            # get the maximum density of each group
+            grpmax <- aggregate(ymax ~ group,
+                                data = plotdetails[["data"]][[1]],
+                                FUN = max)
+            # get the average of each group
+            grpmax$mean <- round(aggregate(Y ~ X1,
+                                     data = data,
+                                     FUN = mean)$Y, 0)
+            grpmax$group <- as.ordered(grpmax$group)
+            ggplotly(
+                ggplot() + 
+                    geom_density(data = data, aes(x = Y, fill = X1, group = X1), alpha = 0.4, color = "black", size = 0.8) + 
+                    geom_vline(data = grpmax, aes(xintercept = mean), size = 0.7, lty = "dashed") +
+                    geom_point(data = grpmax, aes(x = mean, y = 0.5), color = "violetred", size = 6, shape = 4) + 
+                    ylim(c(0.05,NA)) + 
+                    ggtitle("Visualization Of Group Means") + 
+                    theme_minimal() + 
+                    theme(axis.title.y = element_blank(),
+                          axis.title.x = element_text(size = 7))
+                # make hover only show X1
+                )
+        }
         
-        myplot <- ggplot(data = data, aes(x = Y, fill = X1, label = X1)) + 
-            geom_density(alpha = 0.4, color = "black", size = 0.8)
-        plotdetails <- ggplot_build(myplot)
-        # get the maximum density of each group
-        grpmax <- aggregate(ymax ~ group,
-                  data = plotdetails[["data"]][[1]],
-                  FUN = max)
-        # get the average of each group
-        grpmax$mean <- aggregate(Y ~ X1,
-                            data = data,
-                            FUN = mean)$Y
-        grpmax$group <- as.ordered(grpmax$group)
-        ggplotly(ggplot(data = data, aes(x = Y, fill = X1, label = X1)) + 
-            geom_density(alpha = 0.4, color = "black", size = 0.8) + 
-            geom_vline(data = grpmax, aes(xintercept = mean, color = group, label = group), size = 1, lty = "dashed"))
-        
-            # STOP HERE
         
         
 
