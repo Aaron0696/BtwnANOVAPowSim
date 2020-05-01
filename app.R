@@ -1,4 +1,9 @@
 # load packages
+if (require('shinycssloaders') == FALSE){
+    install.packages('shinycssloaders')
+}
+library(shinydashboard)
+
 if (require('shinydashboard') == FALSE){
     install.packages('shinydashboard')
 }
@@ -144,24 +149,29 @@ ui <- fluidPage(
               br(),
               tags$code("For those who are seeing this now, I am still testing things out, so if there are any comments on how it can be further improved (aesthetics, features, user-experience, bugs), do tell me. I plan to extend this to include Two-Way ANOVAs and Multiple Regression once I got the bugs, features and aesthetics down.")),
     fluidRow(
-        column(conditionalPanel(condition = "input.update != 0",
-                                valueBoxOutput("power")), 
-               offset = 0, width = 4),
-        column(plotlyOutput("graph"), width = 5)
+        column(plotlyOutput("graph"), width = 12)
     ),
+    br(),
+    br(),
+    fluidRow(
+        column(conditionalPanel(condition = "input.update != 0",
+                                withSpinner(verbatimTextOutput("power"), 
+                                            size = getOption("spinner.size", default = 0.5),
+                                            proxy.height = "100px")), 
+               offset = 0, width = 12)),
     hr(),
     fluidRow(
         column(4,
                wellPanel(
-                   h3("Please begin by selecting the general settings within this panel."),
+                   h3("Please begin by selecting the general settings within this panel before adjusting the Group Means, SD and Size."),
+                   sliderInput("numgrps", label = h3("Number Of Groups"), min = 2, max = 9, value = 3),
+                   "The number of levels your independent variable possesses. Or the number of groups you have in your design.",
                    numericInput("iter",label = h3("Number Of Iterations"), value = 100),
                    "The option above determines the number of iteration for the simulation, please note that selecting larger number of iterations will increase computational time.",
                    numericInput("seed", label = h3("Set Seed For Replicability"), value = 123456),
                    "The seed ensures that the simulation is replicable, it is ideal to record down the seed utilized. Any sufficiently-large number can be used for the seed.",
                    sliderInput("alphalevel", label = h3("Alpha"), min = 0.001, max = 0.999, value = 0.05, step = 0.001),
                    "This is the alpha level used for significance testing, defaults to 0.05.",
-                   sliderInput("numgrps", label = h3("Number Of Groups"), min = 2, max = 9, value = 2),
-                   "The number of levels your independent variable possesses. Or the number of groups you have in your design.",
                )),
         column(wellPanel(h3("Group Means"), 
                          "Input the unstandardized means here, larger differences lead to higher power.",
@@ -176,7 +186,7 @@ ui <- fluidPage(
                          hr(),
                          uiOutput("grpsize")), width = 2),
         column(wellPanel(h3("All Done?"),
-                         "Click Run! when you are satisfied with your settings and are ready to begin the simulation. The output will appear below, the application may take a while so hang tight!",
+                         "Click Run! when you are satisfied with your settings and are ready to begin the simulation. The output will appear above, the application may take a while so hang tight!",
                          hr(),
                          actionButton("update", label = "Run!")), width = 2)
     )
@@ -191,7 +201,7 @@ server <- function(input, output) {
         lapply(1:numgrps, function(i) {
             numericInput(paste0("g",i,"mean"),
                         label = paste0("Mean Of Group ", i),
-                        value = i/2)
+                        value = 0)
         })
     })
     
@@ -209,7 +219,7 @@ server <- function(input, output) {
         lapply(1:numgrps, function(i) {
             numericInput(paste0("g",i,"size"),
                          label = paste0("Size Of Group ", i),
-                         value = 50)
+                         value = 100)
         })
     })
     
@@ -393,7 +403,7 @@ server <- function(input, output) {
     })
     
     # the main output, which is a dataframe but looks nicer when printed
-    output$power <- renderValueBox({
+    output$power <- renderText({
 
         meanform <- paste0("params$g", 1:params$numgrps, "mean", collapse = ",")
         meanform <- paste0("c(", meanform, ")")
@@ -403,9 +413,7 @@ server <- function(input, output) {
         sizeform <- paste0("c(", sizeform, ")")
         
         if(input$update == 0){
-            valueBox(value = "Computing!",
-                     subtitle = "",
-                     width = 4)
+            paste0("Loading!")
         } else {
 
             # loop repeating anova1way() with appropriate parameters for the number of
@@ -423,12 +431,9 @@ server <- function(input, output) {
             tracker$NumIterations <- params$iter
             rownames(tracker) <- "Main Effect"
             tracker$Power <- tracker$NumSig / tracker$NumIterations
-            # paste0(params$iter, " iterations were simulated and ", tracker$NumSig, " iterations had statistically significant main effects."," The simulated power for the overall main effect is ", tracker$Power, ".")
-            valueBox(value = "The Simulated Power is...",
-                     subtitle = h2(tracker$Power),
-                     width = 4
-                     )
+
         }
+        print(paste0(params$iter, " iterations were simulated and ", tracker$NumSig, " iterations had statistically significant main effects.","\nThe simulated power for the overall main effect is ", tracker$Power, "."))
     })
     
     output$graph <- renderPlotly({
@@ -446,10 +451,11 @@ server <- function(input, output) {
             
             data <- anova1way.sim(means = eval(parse(text = meanform)), 
                                   sds = eval(parse(text = sdform)), 
-                                  grpsize = rep(500, params$numgrps),
+                                  grpsize = rep(10000, params$numgrps),
                                   num.grp = params$numgrps)
+            names(data) <- c("Y", "Group")
             
-            myplot <- ggplot(data = data, aes(x = Y, fill = X1, label = X1)) + 
+            myplot <- ggplot(data = data, aes(x = Y, fill = Group, label = Group)) + 
                 geom_density(alpha = 0.4, color = "black", size = 0.8)
             plotdetails <- ggplot_build(myplot)
             # get the maximum density of each group
@@ -457,22 +463,22 @@ server <- function(input, output) {
                                 data = plotdetails[["data"]][[1]],
                                 FUN = max)
             # get the average of each group
-            grpmax$mean <- round(aggregate(Y ~ X1,
+            grpmax$mean <- round(aggregate(Y ~ Group,
                                      data = data,
-                                     FUN = mean)$Y, 0)
+                                     FUN = mean)$Y, 2)
             grpmax$group <- as.ordered(grpmax$group)
             ggplotly(
                 ggplot() + 
-                    geom_density(data = data, aes(x = Y, fill = X1, group = X1), alpha = 0.4, color = "black", size = 0.8) + 
-                    geom_vline(data = grpmax, aes(xintercept = mean), size = 0.7, lty = "dashed") +
-                    geom_point(data = grpmax, aes(x = mean, y = 0.5), color = "violetred", size = 6, shape = 4) + 
-                    ylim(c(0.05,NA)) + 
-                    ggtitle("Visualization Of Group Means") + 
-                    theme_minimal() + 
-                    theme(axis.title.y = element_blank(),
-                          axis.title.x = element_text(size = 7))
+                    geom_density(data = data, aes(x = Y, fill = Group), alpha = 0.7, size = 0.8) + 
+                    geom_point(data = grpmax, aes(x = mean, y = 0.5, fill = group), color = "violetred", size = 6, shape = 4) + 
+                    ylim(c(0,NA)) +  
+                    ylab("Density") +
+                    xlab("Y") +
+                    theme_classic() + 
+                    theme(axis.title.y = element_text(size = 11),
+                          axis.title.x = element_text(size = 12))
                 # make hover only show X1
-                )
+                , tooltip = c("fill"))
         }
         
         
