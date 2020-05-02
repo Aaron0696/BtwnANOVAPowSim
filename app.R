@@ -148,17 +148,6 @@ ui <- fluidPage(
               "The downside to this simulation-based approach is that an intermediate level of scripting is needed, which may gatekeep users from accessing this technique. This RShiny was created to allow users of all scripting level to perform such simulations.",
               br(),
               tags$code("For those who are seeing this now, I am still testing things out, so if there are any comments on how it can be further improved (aesthetics, features, user-experience, bugs), do tell me. I plan to extend this to include Two-Way ANOVAs and Multiple Regression once I got the bugs, features and aesthetics down.")),
-    fluidRow(
-        column(plotlyOutput("graph"), width = 12)
-    ),
-    br(),
-    br(),
-    fluidRow(
-        column(conditionalPanel(condition = "input.update != 0",
-                                withSpinner(verbatimTextOutput("power"), 
-                                            size = getOption("spinner.size", default = 0.5),
-                                            proxy.height = "100px")), 
-               offset = 0, width = 12)),
     hr(),
     fluidRow(
         column(4,
@@ -186,10 +175,23 @@ ui <- fluidPage(
                          hr(),
                          uiOutput("grpsize")), width = 2),
         column(wellPanel(h3("All Done?"),
-                         "Click Run! when you are satisfied with your settings and are ready to begin the simulation. The output will appear above, the application may take a while so hang tight!",
+                         "Click Run! when you are satisfied with your settings and are ready to begin the simulation. The application may take a while so hang tight!",
                          hr(),
-                         actionButton("update", label = "Run!")), width = 2)
-    )
+                         actionButton("update", label = "Run!", icon = icon("random")),
+                         h4("Output will be generated below...")), width = 2)
+    ),
+    hr(),
+    fluidRow(
+        column(plotlyOutput("graph"), width = 12)
+    ),
+    br(),
+    br(),
+    fluidRow(
+        column(conditionalPanel(condition = "input.update != 0",
+                                withSpinner(verbatimTextOutput("power"), 
+                                            size = getOption("spinner.size", default = 0.5),
+                                            proxy.height = "100px")), 
+               offset = 0, width = 12))
     
 )
 
