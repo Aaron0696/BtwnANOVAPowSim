@@ -1,4 +1,4 @@
-# load packages
+# load and install packages
 if (require('shinycssloaders') == FALSE){
     install.packages('shinycssloaders')
 }
@@ -34,179 +34,128 @@ if (require('plotly') == FALSE){
 }
 library(plotly)
 
+# load these functions maintained in another file
+## anova1way()
+## anova1way.sim()
+source("functions.R")
 
-anova1way <- function(means, sds, grpsize, num.grp, alphalvl = 0.05){
-    
-    # simulate data for each group
-    for (r in 1:num.grp) {
-        # create the model formula to be used in simulateData(model = ...)
-        # assign the model formula to an object called grp*.model,
-        # where * is 1 for group 1 and so on...
-        assign(paste0("grp", r, ".model"),
-               paste0("y ~ ", means[r], "*1", "\n y ~~ ", sds[r] ^ 2, "*y"))
-        
-        # run simulateData() and save the simulated dataset into an object called 
-        # data.g*, where * is 1 for group 1 and so on...
-        assign(paste0("data.g", r),
-               simulateData(eval(parse(
-                   text = paste0("grp", r, ".model")
-               )),
-               sample.nobs = grpsize[r]
-               ))
-    }
-    
-    # retrieve the names of all objects in the environment with the suffix data.g
-    alldata.obs <- ls(pattern = "^data.g")
-    # create command needed to create the overall dataframe, consisting of data from each group
-    # alldat.formula would take the form of "data.g1[,1], data.g2[,2]"
-    alldat.formula <- paste0(alldata.obs, "[,1]", collapse = ",")
-    # wrap alldat.formula in c( and ) to complete the command
-    alldat.formula <- paste0("c(", alldat.formula, ")")
-    
-    # create a vector X to be used as a dummy variable to indicate the groups of
-    # each row of the results in alldat, created later on...
-    X <- c()
-    for (r in 1:num.grp) {
-        X <- append(X, rep(paste(r), grpsize[r]))
-    }
-    
-    # alldat is the overall dataframe that contains the data of all the groups
-    alldat <- data.frame(Y = eval(parse(text = alldat.formula)),
-                         X1 = X)
-    # save the p-value of the main effect from the 1-WAY ANOVA
-    anova.results <- Anova(lm(Y ~ X1,
-                              # use type II for now
-                              data = alldat), type = 2)[1,4]
-    
-    # if the p value is statistically significant, let sig = 1,
-    # else sig = 0
-    if (anova.results < alphalvl) {
-        sig <- 1
-    } else {
-        sig <- 0
-    }
-    
-    # the output of the function is either 0 or 1, 
-    # 0 = main effect was not statistically significant,
-    # 1 = main effect was statistically significant
-    return(sig)
-}
-
-anova1way.sim <- function(means, sds, grpsize, num.grp){
-    
-    # simulate data for each group
-    for (r in 1:num.grp) {
-        # create the model formula to be used in simulateData(model = ...)
-        # assign the model formula to an object called grp*.model,
-        # where * is 1 for group 1 and so on...
-        assign(paste0("grp", r, ".model"),
-               paste0("y ~ ", means[r], "*1", "\n y ~~ ", sds[r] ^ 2, "*y"))
-        
-        # run simulateData() and save the simulated dataset into an object called 
-        # data.g*, where * is 1 for group 1 and so on...
-        assign(paste0("data.g", r),
-               simulateData(eval(parse(
-                   text = paste0("grp", r, ".model")
-               )),
-               sample.nobs = grpsize[r]
-               ))
-    }
-    
-    # retrieve the names of all objects in the environment with the suffix data.g
-    alldata.obs <- ls(pattern = "^data.g")
-    # create command needed to create the overall dataframe, consisting of data from each group
-    # alldat.formula would take the form of "data.g1[,1], data.g2[,2]"
-    alldat.formula <- paste0(alldata.obs, "[,1]", collapse = ",")
-    # wrap alldat.formula in c( and ) to complete the command
-    alldat.formula <- paste0("c(", alldat.formula, ")")
-    
-    # create a vector X to be used as a dummy variable to indicate the groups of
-    # each row of the results in alldat, created later on...
-    X <- c()
-    for (r in 1:num.grp) {
-        X <- append(X, rep(paste(r), grpsize[r]))
-    }
-    
-    # alldat is the overall dataframe that contains the data of all the groups
-    alldat <- data.frame(Y = eval(parse(text = alldat.formula)),
-                         X1 = X)
-}
-
-
-# Define UI for application that draws a histogram
+# crafting user-interface
 ui <- fluidPage(
+    # select theme
     theme = shinytheme("lumen"),
+    # title
     titlePanel(h1("One-Way ANOVA Power Simulator")),
+    # descrption in prose form
     wellPanel("This is a personal project for myself and it is essentially a power simulator for One-Way ANOVAs.",
               br(),
-              "In experiments, power is usually defined as the probability that an effect would be statistically significant given that the effect truly exists.",
+              "In experiments, power is usually defined as the probability that an effect 
+              would be statistically significant given that the effect truly exists.",
               br(),
-              "There are formulas to calculate power but these formulas assume that certain assumptions are met. A less restrictive approach to calculating power is to draw a sample from a known population where the effect is present, test the hypothesis and repeat this multiple times (iterations). Count the relative frequency that a statistically significant effect was observed and that is power.",
+              "There are formulas to calculate power but these formulas assume that certain assumptions are met. 
+              A less restrictive approach to calculating power is to draw a sample from a known population where the effect is present, 
+              test the hypothesis and repeat this multiple times (iterations). Count the relative frequency that a statistically significant effect 
+              was observed and that is power.",
               br(),
-              "For example, I generated samples of n = 100 each while assuming that the effect existed. If 600 out of 1000 iterations produced a statistically significant effect, my estimated power would be 0.6.",
+              "For example, I generated samples of n = 100 each while assuming that the effect existed. 
+              If 600 out of 1000 iterations produced a statistically significant effect,
+              my estimated power would be 0.6.",
               br(),
-              "The downside to this simulation-based approach is that an intermediate level of scripting is needed, which may gatekeep users from accessing this technique. This RShiny was created to allow users of all scripting level to perform such simulations.",
+              "The downside to this simulation-based approach is that an intermediate level of scripting is needed, 
+              which may gatekeep users from accessing this technique. This RShiny was created to allow users of
+              all scripting level to perform such simulations.",
               br(),
-              tags$code("For those who are seeing this now, I am still testing things out, so if there are any comments on how it can be further improved (aesthetics, features, user-experience, bugs), do tell me. I plan to extend this to include Two-Way ANOVAs and Multiple Regression once I got the bugs, features and aesthetics down.")),
+              tags$code("For those who are seeing this now, I am still testing things out, so if there are any comments on how 
+                        it can be further improved (aesthetics, features, user-experience, bugs), do tell me. 
+                        I plan to extend this to include Two-Way ANOVAs and Multiple Regression once I got the bugs, features and aesthetics down.")),
     hr(),
     fluidRow(
         column(4,
+               # general settings panel
                wellPanel(
                    h3("Please begin by selecting the general settings within this panel before adjusting the Group Means, SD and Size."),
-                   sliderInput("numgrps", label = h3("Number Of Groups"), min = 2, max = 9, value = 3),
+                   sliderInput("numgrps", label = h3("Number Of Groups"), min = 2, max = 9, value = 2),
                    "The number of levels your independent variable possesses. Or the number of groups you have in your design.",
-                   numericInput("iter",label = h3("Number Of Iterations"), value = 100),
-                   "The option above determines the number of iteration for the simulation, please note that selecting larger number of iterations will increase computational time.",
+                   numericInput("iter",label = h3("Number Of Iterations"), value = 50),
+                   "The option above determines the number of iteration for the simulation, please note that selecting 
+                   larger number of iterations will increase computational time.",
                    numericInput("seed", label = h3("Set Seed For Replicability"), value = 123456),
-                   "The seed ensures that the simulation is replicable, it is ideal to record down the seed utilized. Any sufficiently-large number can be used for the seed.",
+                   "The seed ensures that the simulation is replicable, it is ideal to record down the seed utilized. 
+                   Any sufficiently-large number can be used for the seed.",
                    sliderInput("alphalevel", label = h3("Alpha"), min = 0.001, max = 0.999, value = 0.05, step = 0.001),
                    "This is the alpha level used for significance testing, defaults to 0.05.",
                )),
-        column(wellPanel(h3("Group Means"), 
-                         "Input the unstandardized means here, larger differences lead to higher power.",
-                         hr(),
-                         uiOutput("grpmeans")), width = 2),
-        column(wellPanel(h3("Group SDs"), 
-                         "Input the group standard deviations (SDs) here, smaller SDs lead to higher power.",
-                         hr(),
-                         uiOutput("grpsds")), width = 2),
-        column(wellPanel(h3("Group Size"), 
-                         "Input the group sizes here, equal group sizes are ideal to maximize power.",
-                         hr(),
-                         uiOutput("grpsize")), width = 2),
-        column(wellPanel(h3("All Done?"),
-                         "Click Run! when you are satisfied with your settings and are ready to begin the simulation. The application may take a while so hang tight!",
-                         hr(),
-                         actionButton("update", label = "Run!", icon = icon("random")),
-                         h4("Output will be generated below...")), width = 2)
+        column(
+            # panel for group means that is dependent on the number of groups selected
+            wellPanel(h3("Group Means"), 
+                      "Input the unstandardized means here, larger differences lead to higher power.",
+                      hr(),
+                      uiOutput("grpmeans")), 
+            width = 2),
+        column(
+            # dependent panel for group standard deivations
+            wellPanel(h3("Group SDs"), 
+                      "Input the group standard deviations (SDs) here, smaller SDs lead to higher power.",
+                      hr(),
+                      uiOutput("grpsds")),
+            width = 2),
+        column(
+            # dependent panel for group sizes
+            wellPanel(h3("Group Size"), 
+                      "Input the group sizes here, equal group sizes are ideal to maximize power.",
+                      hr(),
+                      uiOutput("grpsize")), 
+            width = 2),
+        column(
+            # panel for the run button
+            wellPanel(h3("All Done?"),
+                      "Click Run! when you are satisfied with your settings and are ready to begin the simulation.
+                      The application may take a while so hang tight!",
+                      hr(),
+                      actionButton("update", label = "Run!", icon = icon("random")),
+                      h4("Output will be generated below...")), width = 2)
     ),
     hr(),
     fluidRow(
-        column(plotlyOutput("graph"), width = 12)
+        column(
+            # description for the graph
+            conditionalPanel(condition = "input.update != 0",
+                             h2("The graph approximates the population described by the chosen parameters."),
+                             h3("Power is maximized when the groups overlap minimally, this can be achieved by selecting 
+                                   greater mean differences or lower standard deviations."),
+                             h3("Each group is assigned a different color and the X denotes the value of the mean."),
+                             h4("The simulated power will be reported below.")), 
+            width = 4),
+        column(
+            # interactive graph
+            plotlyOutput("graph"), 
+            width = 8)
     ),
-    br(),
-    br(),
+    hr(),
     fluidRow(
-        column(conditionalPanel(condition = "input.update != 0",
-                                withSpinner(verbatimTextOutput("power"), 
-                                            size = getOption("spinner.size", default = 0.5),
-                                            proxy.height = "100px")), 
-               offset = 0, width = 12))
-    
+        column(
+            # text communicating the simulated power
+            conditionalPanel(condition = "input.update != 0",
+                             withSpinner(verbatimTextOutput("power"), 
+                                         size = getOption("spinner.size", default = 0.5),
+                                         proxy.height = "100px")), 
+            offset = 0, width = 12))
 )
 
 
 server <- function(input, output) {
     
+    # take number of groups as input and
+    # create dynamic UI that take means as input
     output$grpmeans <- renderUI({
         numgrps <- as.integer(input$numgrps)
         lapply(1:numgrps, function(i) {
             numericInput(paste0("g",i,"mean"),
-                        label = paste0("Mean Of Group ", i),
-                        value = 0)
+                         label = paste0("Mean Of Group ", i),
+                         value = i/2)
         })
     })
-    
+    # take number of groups as input and
+    # create dynamic UI that take standard deviations as input
     output$grpsds <- renderUI({
         numgrps <- as.integer(input$numgrps)
         lapply(1:numgrps, function(i) {
@@ -215,7 +164,8 @@ server <- function(input, output) {
                          value = 1)
         })
     })
-    
+    # take number of groups as input and
+    # create dynamic UI that take group sizes as input
     output$grpsize <- renderUI({
         numgrps <- as.integer(input$numgrps)
         lapply(1:numgrps, function(i) {
@@ -225,26 +175,21 @@ server <- function(input, output) {
         })
     })
     
-    
-    # tracker is the object which will keep track of how many time the
-    # main effect of X1 was statistically significant
+    # tracker is the object which will keep track of how many times the
+    # main effect of X1 was statistically significant in the simulation
     tracker <- data.frame(NumIterations = 0,
-                          NumSig = c(0)
-                          )
-    # create params, a list of reactive values that will create the interactivity of
-    # the app
+                          NumSig = 0)
+    
+    # params is a list of reactive values that will create the interactivity of the app
+    # used to link observeEvent() to the inputs
     params <- reactiveValues(numgrps = 2)
     
-    # ensure that the results only update when the calculate
-    # button is pressed and input$update is invalidated
-    # browser()
+    # ensure that the results only update when the run button is pressed and input$update is invalidated
     observeEvent(input$update,{
-    
         params$iter <- input$iter
         params$numgrps <- input$numgrps
         params$seed <- input$seed
         params$alpha <- input$alphalevel
-        
         if(input$numgrps == 2){
             params$g1mean <- input$g1mean
             params$g2mean <- input$g2mean
@@ -253,7 +198,6 @@ server <- function(input, output) {
             params$g1size <- input$g1size
             params$g2size <- input$g2size
         }
-        
         if(input$numgrps == 3){
             params$g1mean <- input$g1mean
             params$g2mean <- input$g2mean
@@ -265,7 +209,6 @@ server <- function(input, output) {
             params$g2size <- input$g2size
             params$g3size <- input$g3size
         }
-        
         if(input$numgrps == 4){
             params$g1mean <- input$g1mean
             params$g2mean <- input$g2mean
@@ -280,7 +223,6 @@ server <- function(input, output) {
             params$g3size <- input$g3size
             params$g4size <- input$g4size
         }
-        
         if(input$numgrps == 5){
             params$g1mean <- input$g1mean
             params$g2mean <- input$g2mean
@@ -298,7 +240,6 @@ server <- function(input, output) {
             params$g4size <- input$g4size
             params$g5size <- input$g5size
         }
-        
         if(input$numgrps == 6){
             params$g1mean <- input$g1mean
             params$g2mean <- input$g2mean
@@ -320,7 +261,6 @@ server <- function(input, output) {
             params$g6size <- input$g6size
             
         }
-        
         if(input$numgrps == 7){
             params$g1mean <- input$g1mean
             params$g2mean <- input$g2mean
@@ -344,7 +284,6 @@ server <- function(input, output) {
             params$g6size <- input$g6size
             params$g7size <- input$g7size
         }
-        
         if(input$numgrps == 8){
             params$g1mean <- input$g1mean
             params$g2mean <- input$g2mean
@@ -371,7 +310,6 @@ server <- function(input, output) {
             params$g7size <- input$g7size
             params$g8size <- input$g8size
         }
-        
         if(input$numgrps == 9){
             params$g1mean <- input$g1mean
             params$g2mean <- input$g2mean
@@ -401,12 +339,12 @@ server <- function(input, output) {
             params$g8size <- input$g8size
             params$g9size <- input$g9size
         }
-        
     })
     
-    # the main output, which is a dataframe but looks nicer when printed
+    # power output
     output$power <- renderText({
-
+        
+        # creating the formulas to be parsed as arguments
         meanform <- paste0("params$g", 1:params$numgrps, "mean", collapse = ",")
         meanform <- paste0("c(", meanform, ")")
         sdform <- paste0("params$g", 1:params$numgrps, "sd", collapse = ",")
@@ -414,32 +352,36 @@ server <- function(input, output) {
         sizeform <- paste0("params$g", 1:params$numgrps, "size", collapse = ",")
         sizeform <- paste0("c(", sizeform, ")")
         
+        # for the first time the run button is pressed, say loading
         if(input$update == 0){
             paste0("Loading!")
         } else {
-
-            # loop repeating anova1way() with appropriate parameters for the number of
+            # loop repeating anova1way() with the chosen parameters for the number of
             # iterations specified by the user    
             set.seed(params$seed)
             for(i in 1:params$iter){
-                    tracker$NumSig[1] <- tracker$NumSig[1] + anova1way(means = eval(parse(text = meanform)), 
-                                                                     sds = eval(parse(text = sdform)), 
-                                                                     grpsize = eval(parse(text = sizeform)),
-                                                                     num.grp = params$numgrps,
-                                                                     alphalvl = params$alpha)
-                    # progress <- progress + 1
-                    # print(paste0(progress, " out of ", params$iter, " iterations completed!"))
+                tracker$NumSig[1] <- tracker$NumSig[1] + anova1way(means = eval(parse(text = meanform)), 
+                                                                   sds = eval(parse(text = sdform)), 
+                                                                   grpsize = eval(parse(text = sizeform)),
+                                                                   num.grp = params$numgrps,
+                                                                   alphalvl = params$alpha)
             }
+            # save the number of iterations from params
             tracker$NumIterations <- params$iter
-            rownames(tracker) <- "Main Effect"
+            # calculate power
             tracker$Power <- tracker$NumSig / tracker$NumIterations
-
+            
         }
-        print(paste0(params$iter, " iterations were simulated and ", tracker$NumSig, " iterations had statistically significant main effects.","\nThe simulated power for the overall main effect is ", tracker$Power, "."))
+        # print text
+        print(paste0(params$iter, " iterations were simulated and ", 
+                     tracker$NumSig, " iterations had statistically significant main effects.",
+                     "\nThe simulated power for the overall main effect is ", tracker$Power, "."))
     })
     
+    # plotly output
     output$graph <- renderPlotly({
         
+        # same as above
         meanform <- paste0("params$g", 1:params$numgrps, "mean", collapse = ",")
         meanform <- paste0("c(", meanform, ")")
         sdform <- paste0("params$g", 1:params$numgrps, "sd", collapse = ",")
@@ -447,27 +389,28 @@ server <- function(input, output) {
         sizeform <- paste0("params$g", 1:params$numgrps, "size", collapse = ",")
         sizeform <- paste0("c(", sizeform, ")")
         
+        # same as above, show blank graph before button is pressed
         if(input$update == 0){
-            plotly()
-        } else {
             
+        } else {
+            # simulate data with 10,000 rows in each group to approximate population
             data <- anova1way.sim(means = eval(parse(text = meanform)), 
                                   sds = eval(parse(text = sdform)), 
                                   grpsize = rep(10000, params$numgrps),
                                   num.grp = params$numgrps)
             names(data) <- c("Y", "Group")
-            
             myplot <- ggplot(data = data, aes(x = Y, fill = Group, label = Group)) + 
                 geom_density(alpha = 0.4, color = "black", size = 0.8)
+            # get numeric points used to plot density
             plotdetails <- ggplot_build(myplot)
             # get the maximum density of each group
             grpmax <- aggregate(ymax ~ group,
                                 data = plotdetails[["data"]][[1]],
                                 FUN = max)
-            # get the average of each group
+            # get the mean of each group
             grpmax$mean <- round(aggregate(Y ~ Group,
-                                     data = data,
-                                     FUN = mean)$Y, 2)
+                                           data = data,
+                                           FUN = mean)$Y, 2)
             grpmax$group <- as.ordered(grpmax$group)
             ggplotly(
                 ggplot() + 
@@ -479,16 +422,13 @@ server <- function(input, output) {
                     theme_classic() + 
                     theme(axis.title.y = element_text(size = 11),
                           axis.title.x = element_text(size = 12))
-                # make hover only show X1
-                , tooltip = c("fill"))
+                # make hovertext only show group information
+                , tooltip = c("fill")) %>%
+                layout(legend = list(orientation = "h", y = 1.2))
         }
-        
-        
-        
-
     })
 }
 
-# Run the application 
+# run
 shinyApp(ui = ui, server = server)
 
