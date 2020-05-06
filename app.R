@@ -44,32 +44,45 @@ ui <- fluidPage(
     # select theme
     theme = shinytheme("lumen"),
     # title
-    titlePanel(h1("One-Way ANOVA Power Simulator")),
+    titlePanel(h1("One-Way ANOVA Power Simulator"),
+               windowTitle = "PowerPsych"),
+    wellPanel(),
     # descrption in prose form
-    wellPanel("This is a personal project for myself and it is essentially a power simulator for One-Way ANOVAs.",
-              br(),
-              "In experiments, power is usually defined as the probability that an effect 
-              would be statistically significant given that the effect truly exists.",
-              br(),
-              "There are formulas to calculate power but these formulas assume that certain assumptions are met. 
-              A less restrictive approach to calculating power is to draw a sample from a known population where the effect is present, 
-              test the hypothesis and repeat this multiple times (iterations). Count the relative frequency that a statistically significant effect 
-              was observed and that is power.",
-              br(),
-              "For example, I generated samples of n = 100 each while assuming that the effect existed. 
-              If 600 out of 1000 iterations produced a statistically significant effect,
-              my estimated power would be 0.6.",
-              br(),
-              "The downside to this simulation-based approach is that an intermediate level of scripting is needed, 
-              which may gatekeep users from accessing this technique. This RShiny was created to allow users of
-              all scripting level to perform such simulations.",
-              br(),
-              tags$code("For those who are seeing this now, I am still testing things out, so if there are any comments on how 
+    fluidRow(
+        column(
+            wellPanel("This is a personal project for myself and it is essentially a power simulator for One-Way ANOVAs.",
+                      br(),
+                      "In experiments, power is usually defined as the probability that an effect 
+                      would be statistically significant given that the effect truly exists.",
+                      br(),
+                      "There are formulas to calculate power but these formulas assume that certain assumptions are met.
+                      A less restrictive approach to calculating power is to draw a sample from a known population where the effect is present,
+                      test the hypothesis and repeat this multiple times (iterations). Count the relative frequency that a statistically significant effect
+                      was observed and that is power.",
+                      br(),
+                      "For example, I generated samples of n = 100 each while assuming that the effect existed.
+                      If 600 out of 1000 iterations produced a statistically significant effect,
+                      my estimated power would be 0.6.",
+                      br(),
+                      "The downside to this simulation-based approach is that an intermediate level of scripting is needed,
+                      which may gatekeep users from accessing this technique. This RShiny was created to allow users of
+                      all scripting level to perform such simulations.",
+                      br(),
+                      tags$code("For those who are seeing this now, I am still testing things out, so if there are any comments on how 
                         it can be further improved (aesthetics, features, user-experience, bugs), do tell me. 
-                        I plan to extend this to include Two-Way ANOVAs and Multiple Regression once I got the bugs, features and aesthetics down.")),
+                        I plan to extend this to include Two-Way ANOVAs and Multiple Regression once I got the bugs, features and aesthetics down.")
+            ),
+            width = 10),
+        column(
+            wellPanel(h4("Access the codes on "),
+                      h4(tags$a(href = "https://github.com/Aaron0696/PowerPsych", "Github")),
+                      h4(" or connect with me on "),
+                      h4(tags$a(href = "https://www.linkedin.com/in/aaron-lim-b30898135/", "LinkedIn."))),
+            width = 2
+        )),
     hr(),
     fluidRow(
-        column(4,
+        column(width = 4,
                # general settings panel
                wellPanel(
                    h3("Please begin by selecting the general settings within this panel before adjusting the Group Means, SD and Size."),
