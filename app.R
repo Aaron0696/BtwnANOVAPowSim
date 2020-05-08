@@ -85,14 +85,18 @@ ui <- fluidPage(
            # general settings panel
            wellPanel(
              h3("Please begin by selecting the general settings within this panel before adjusting the Group Means, SD and Size."),
+             
              sliderInput("numgrps", label = h3("Number Of Groups"), min = 2, max = 9, value = 2),
              "The number of levels your independent variable possesses. Or the number of groups you have in your design.",
+             
              numericInput("iter",label = h3("Number Of Iterations"), value = 100),
              "The option above determines the number of iteration for the simulation, please note that selecting 
                    larger number of iterations will increase computational time.",
+             
              numericInput("seed", label = h3("Set Seed For Replicability"), value = 123456),
              "The seed ensures that the simulation is replicable, it is ideal to record down the seed utilized. 
                    Any sufficiently-large number can be used for the seed.",
+             
              sliderInput("alphalevel", label = h3("Alpha"), min = 0.001, max = 0.999, value = 0.05, step = 0.001),
              "This is the alpha level used for significance testing, defaults to 0.05.",
            )),
