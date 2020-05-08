@@ -34,6 +34,11 @@ if (require('plotly') == FALSE){
 }
 library(plotly)
 
+if (require('stringr') == FALSE){
+  install.packages('stringr')
+}
+library(stringr)
+
 # load these functions maintained in another file
 ## anova1way()
 ## anova1way.sim()
