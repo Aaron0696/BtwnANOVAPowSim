@@ -127,16 +127,25 @@ anova1way.sim <- function(means, sds, grpsize, num.grp){
 # description
     ## this function runs a single two-way ANOVA with the selected parameters.
 # inputs
+    ## iv1.lvl, the number of levels that iv1 possess
+    ## iv2.lvl the number of levels that iv2 possess
+      ### multiplying iv1.lvl and iv2.lvl together gives us the number of groups
+      ### for means, sds and grp size, they are arranged such that each value of iv1 is permutated
+      ### across first, then iv2.
+      ### for example, suppose we are running a 2 X 3 ANOVA
+      ### iv1.lvl is 2, iv2.lvl is 3, total of 6 groups
+      ### the means vector would be arranged like so:
+      ### c(grp11,12,21,22,31,33)
+      ### where grp12 refers to the group assigned to level 1 of iv1 and level 2 of iv2
     ## means, vector with each element corresponding to the mean of each group.
     ## sds, vector with each element corresponding to the sd of each group.
     ## grpsize, vector with each element corresponding to the size of each group.
-    ## num.grp, numeric value denoting the number of groups.
-      ### should correspond to the length of means, sds and grpsize vector.
     ## alphalvl, the alpha level for NHST, defaults to 0.05.
 # output
-    ## the output of this function is either 0 or 1, 
-    ## 0 = main effect was not statistically significant,
-    ## 1 = main effect was statistically significant.
+    ## the output of this function is a ataframe with 2 colums, Effects and Sig
+    ## Effects indicate whether the sig refers to the main effects or interaction effects
+    ## Sig indicates whether the effect was statistically significant given the alpha level,
+    ## 0 = n.s, 1 = sig
 
 # for development
 # 2 x 3

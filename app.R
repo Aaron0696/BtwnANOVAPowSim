@@ -86,13 +86,19 @@ ui <- fluidPage(
     )),
   hr(),
   fluidRow(
-    column(width = 4,
+    column(width = 3,
            # general settings panel
+           h2("Step One: General Settings"),
+           hr(),
            wellPanel(
-             h3("Please begin by selecting the general settings within this panel before adjusting the Group Means, SD and Size."),
              
-             sliderInput("numgrps", label = h3("Number Of Groups"), min = 2, max = 9, value = 2),
-             "The number of levels your independent variable possesses. Or the number of groups you have in your design.",
+             radioButtons("numways", label = h3("ANOVA Design"),
+                          choices = list("One-Way Between-Subjects" = "B1", 
+                                         "One-Way Within-Subjects" = "R1", 
+                                         "Two-Way Between-Subjects" = "B2",
+                                         "Two-Way Within-Subjects" = "R2",
+                                         "Two-Way Mixed" = "M2"), 
+                          selected = "B1"),
              
              numericInput("iter",label = h3("Number Of Iterations"), value = 100),
              "The option above determines the number of iteration for the simulation, please note that selecting 
@@ -106,26 +112,15 @@ ui <- fluidPage(
              "This is the alpha level used for significance testing, defaults to 0.05.",
            )),
     column(
-      # panel for group means that is dependent on the number of groups selected
-      wellPanel(h3("Group Means"), 
-                "Input the unstandardized means here, larger differences lead to higher power.",
-                hr(),
-                uiOutput("grpmeans")), 
-      width = 2),
-    column(
-      # dependent panel for group standard deivations
-      wellPanel(h3("Group SDs"), 
-                "Input the group standard deviations (SDs) here, smaller SDs lead to higher power.",
-                hr(),
-                uiOutput("grpsds")),
-      width = 2),
-    column(
-      # dependent panel for group sizes
-      wellPanel(h3("Group Size"), 
-                "Input the group sizes here, equal group sizes are ideal to maximize power.",
-                hr(),
-                uiOutput("grpsize")), 
-      width = 2),
+      # panel for condition parameters that is dependent on the number of conditions selected
+      h2("Step Two: Condition Parameters"), 
+      hr(),
+      h4("Input the unstandardized means, standard deviations and condition sizes in the panels below. 
+         Greater differences in means, smaller standard deviations and larger condition sizes will lead to greater power."),
+      hr(),
+      uiOutput("numgrp.sel"),
+      uiOutput("cndparams"), 
+      width = 7),
     column(
       # panel for the run button
       wellPanel(h3("All Done?"),
@@ -140,11 +135,11 @@ ui <- fluidPage(
     column(
       # description for the graph
       conditionalPanel(condition = "input.update != 0",
-                       h2("The graph approximates the population described by the chosen parameters."),
-                       h3("Power is maximized when the groups overlap minimally, this can be achieved by selecting 
+                       h3("The density plots approximates the population described by the chosen parameters."),
+                       h3("Power is maximized when the conditions overlap minimally, this can be achieved by selecting 
                                    greater mean differences or lower standard deviations."),
-                       h3("Each group is assigned a different color and the X denotes the value of the mean."),
-                       h4("The simulated power will be reported below.")), 
+                       h3("Each condition is assigned a different color and X denotes the value of the mean."),
+                       h3("The simulated power will be reported below.")), 
       width = 4),
     column(
       # interactive graph
@@ -165,35 +160,38 @@ ui <- fluidPage(
 
 server <- function(input, output) {
   
-  # take number of groups as input and
+  output$numgrp.sel <- renderUI({
+    
+    wellPanel(sliderInput("numcnds", label = h3("Number Of Conditions"), min = 2, max = 9, value = 2),
+    "The number of conditions in the independent variable possesses. Or the number of conditions you have in your design.")
+    
+    
+  })
+  
+  
+  # take number of conditions as input and
   # create dynamic UI that take means as input
-  output$grpmeans <- renderUI({
-    numgrps <- as.integer(input$numgrps)
-    lapply(1:numgrps, function(i) {
-      numericInput(paste0("g",i,"mean"),
-                   label = paste0("Mean Of Group ", i),
-                   value = i/2)
-    })
-  })
-  # take number of groups as input and
-  # create dynamic UI that take standard deviations as input
-  output$grpsds <- renderUI({
-    numgrps <- as.integer(input$numgrps)
-    lapply(1:numgrps, function(i) {
-      numericInput(paste0("g",i,"sd"),
-                   label = paste0("SD Of Group ", i),
-                   value = 1)
-    })
-  })
-  # take number of groups as input and
-  # create dynamic UI that take group sizes as input
-  output$grpsize <- renderUI({
-    numgrps <- as.integer(input$numgrps)
-    lapply(1:numgrps, function(i) {
-      numericInput(paste0("g",i,"size"),
-                   label = paste0("Size Of Group ", i),
-                   value = 50)
-    })
+  output$cndparams <- renderUI({
+    
+    if (input$numways == "B1"|input$numways == "R1") {
+      
+      numcnds <- as.integer(input$numcnds)
+      lapply(1:numcnds, function(i) {
+        column(wellPanel(numericInput(paste0("g",i,"mean"),
+                                      label = paste0("Mean Of Condition ", i),
+                                      value = i/2),
+                         numericInput(paste0("g",i,"sd"),
+                                      label = paste0("SD Of Condition ", i),
+                                      value = 1),
+                         numericInput(paste0("g",i,"size"),
+                                      label = paste0("Size Of Condition ", i),
+                                      value = 50)), width = 3) 
+      })
+    }
+    
+    
+    
+    
   })
   
   # tracker is the object which will keep track of how many times the
@@ -203,15 +201,15 @@ server <- function(input, output) {
   
   # params is a list of reactive values that will create the interactivity of the app
   # used to link observeEvent() to the inputs
-  params <- reactiveValues(numgrps = 2)
+  params <- reactiveValues(numcnds = 2)
   
   # ensure that the results only update when the run button is pressed and input$update is invalidated
   observeEvent(input$update,{
     params$iter <- input$iter
-    params$numgrps <- input$numgrps
+    params$numcnds <- input$numcnds
     params$seed <- input$seed
     params$alpha <- input$alphalevel
-    if(input$numgrps == 2){
+    if(input$numcnds == 2){
       params$g1mean <- input$g1mean
       params$g2mean <- input$g2mean
       params$g1sd <- input$g1sd
@@ -219,7 +217,7 @@ server <- function(input, output) {
       params$g1size <- input$g1size
       params$g2size <- input$g2size
     }
-    if(input$numgrps == 3){
+    if(input$numcnds == 3){
       params$g1mean <- input$g1mean
       params$g2mean <- input$g2mean
       params$g3mean <- input$g3mean
@@ -230,7 +228,7 @@ server <- function(input, output) {
       params$g2size <- input$g2size
       params$g3size <- input$g3size
     }
-    if(input$numgrps == 4){
+    if(input$numcnds == 4){
       params$g1mean <- input$g1mean
       params$g2mean <- input$g2mean
       params$g3mean <- input$g3mean
@@ -244,7 +242,7 @@ server <- function(input, output) {
       params$g3size <- input$g3size
       params$g4size <- input$g4size
     }
-    if(input$numgrps == 5){
+    if(input$numcnds == 5){
       params$g1mean <- input$g1mean
       params$g2mean <- input$g2mean
       params$g3mean <- input$g3mean
@@ -261,7 +259,7 @@ server <- function(input, output) {
       params$g4size <- input$g4size
       params$g5size <- input$g5size
     }
-    if(input$numgrps == 6){
+    if(input$numcnds == 6){
       params$g1mean <- input$g1mean
       params$g2mean <- input$g2mean
       params$g3mean <- input$g3mean
@@ -282,7 +280,7 @@ server <- function(input, output) {
       params$g6size <- input$g6size
       
     }
-    if(input$numgrps == 7){
+    if(input$numcnds == 7){
       params$g1mean <- input$g1mean
       params$g2mean <- input$g2mean
       params$g3mean <- input$g3mean
@@ -305,7 +303,7 @@ server <- function(input, output) {
       params$g6size <- input$g6size
       params$g7size <- input$g7size
     }
-    if(input$numgrps == 8){
+    if(input$numcnds == 8){
       params$g1mean <- input$g1mean
       params$g2mean <- input$g2mean
       params$g3mean <- input$g3mean
@@ -331,7 +329,7 @@ server <- function(input, output) {
       params$g7size <- input$g7size
       params$g8size <- input$g8size
     }
-    if(input$numgrps == 9){
+    if(input$numcnds == 9){
       params$g1mean <- input$g1mean
       params$g2mean <- input$g2mean
       params$g3mean <- input$g3mean
@@ -366,11 +364,11 @@ server <- function(input, output) {
   output$power <- renderText({
     
     # creating the formulas to be parsed as arguments
-    meanform <- paste0("params$g", 1:params$numgrps, "mean", collapse = ",")
+    meanform <- paste0("params$g", 1:params$numcnds, "mean", collapse = ",")
     meanform <- paste0("c(", meanform, ")")
-    sdform <- paste0("params$g", 1:params$numgrps, "sd", collapse = ",")
+    sdform <- paste0("params$g", 1:params$numcnds, "sd", collapse = ",")
     sdform <- paste0("c(", sdform, ")")
-    sizeform <- paste0("params$g", 1:params$numgrps, "size", collapse = ",")
+    sizeform <- paste0("params$g", 1:params$numcnds, "size", collapse = ",")
     sizeform <- paste0("c(", sizeform, ")")
     
     # for the first time the run button is pressed, say loading
@@ -384,7 +382,7 @@ server <- function(input, output) {
         tracker$NumSig[1] <- tracker$NumSig[1] + anova1way(means = eval(parse(text = meanform)), 
                                                            sds = eval(parse(text = sdform)), 
                                                            grpsize = eval(parse(text = sizeform)),
-                                                           num.grp = params$numgrps,
+                                                           num.grp = params$numcnds,
                                                            alphalvl = params$alpha)
       }
       # save the number of iterations from params
@@ -403,47 +401,47 @@ server <- function(input, output) {
   output$graph <- renderPlotly({
     
     # same as above
-    meanform <- paste0("params$g", 1:params$numgrps, "mean", collapse = ",")
+    meanform <- paste0("params$g", 1:params$numcnds, "mean", collapse = ",")
     meanform <- paste0("c(", meanform, ")")
-    sdform <- paste0("params$g", 1:params$numgrps, "sd", collapse = ",")
+    sdform <- paste0("params$g", 1:params$numcnds, "sd", collapse = ",")
     sdform <- paste0("c(", sdform, ")")
-    sizeform <- paste0("params$g", 1:params$numgrps, "size", collapse = ",")
+    sizeform <- paste0("params$g", 1:params$numcnds, "size", collapse = ",")
     sizeform <- paste0("c(", sizeform, ")")
     
     # same as above, show blank graph before button is pressed
     if(input$update == 0){
       
     } else {
-      # simulate data with 10,000 rows in each group to approximate population
+      # simulate data with 10,000 rows in each condition to approximate population
       data <- anova1way.sim(means = eval(parse(text = meanform)), 
                             sds = eval(parse(text = sdform)), 
-                            grpsize = rep(10000, params$numgrps),
-                            num.grp = params$numgrps)
-      names(data) <- c("Y", "Group")
-      myplot <- ggplot(data = data, aes(x = Y, fill = Group, label = Group)) + 
+                            grpsize = rep(10000, params$numcnds),
+                            num.grp = params$numcnds)
+      names(data) <- c("Y", "condition")
+      myplot <- ggplot(data = data, aes(x = Y, fill = condition, label = condition)) + 
         geom_density(alpha = 0.4, color = "black", size = 0.8)
       # get numeric points used to plot density
       plotdetails <- ggplot_build(myplot)
-      # get the maximum density of each group
-      grpmax <- aggregate(ymax ~ group,
+      # get the maximum density of each condition
+      cndmax <- aggregate(ymax ~ group,
                           data = plotdetails[["data"]][[1]],
                           FUN = max)
-      # get the mean of each group
-      grpmax$mean <- round(aggregate(Y ~ Group,
+      # get the mean of each condition
+      cndmax$mean <- round(aggregate(Y ~ condition,
                                      data = data,
                                      FUN = mean)$Y, 2)
-      grpmax$group <- as.ordered(grpmax$group)
+      cndmax$group <- as.ordered(cndmax$group)
       ggplotly(
         ggplot() + 
-          geom_density(data = data, aes(x = Y, fill = Group), alpha = 0.7, size = 0.8) + 
-          geom_point(data = grpmax, aes(x = mean, y = 0.5, fill = group), color = "violetred", size = 6, shape = 4) + 
+          geom_density(data = data, aes(x = Y, fill = condition), alpha = 0.7, size = 0.8) + 
+          geom_point(data = cndmax, aes(x = mean, y = 0.5, fill = group), color = "violetred", size = 6, shape = 4) + 
           ylim(c(0,NA)) +  
           ylab("Density") +
           xlab("Y") +
           theme_classic() + 
           theme(axis.title.y = element_text(size = 11),
                 axis.title.x = element_text(size = 12))
-        # make hovertext only show group information
+        # make hovertext only show condition information
         , tooltip = c("fill")) %>%
         layout(legend = list(orientation = "h", y = 1.2))
     }
