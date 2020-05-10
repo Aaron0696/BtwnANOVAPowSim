@@ -1,3 +1,60 @@
+# take note that group size is a constant now
+anova1way.within <- function(means, sds, grpsize, num.grp, alphalvl = 0.05){
+  
+  form <- ""
+  # this loop creates the arguments for simulateData()
+  # each iteration is simulates the data for one group
+  for (r in 1:num.grp) {
+    # create the model formula to be used in simulateData(model = ...)
+    # assign the model formula to an object called grp*.model,
+    # where * is 1 for group 1 and so on...
+    
+    if(r == 1){
+      form <- paste0(form, 
+                     "y", r, " ~ ", means[r], "*1",
+                     "\ny", r, " ~~ ", sds[r] ^ 2, "*y", r, "\n")
+      
+    } else {
+      form <- paste0(form, 
+                     "y", r, " ~ ", means[r], "*1",
+                     "\ny", r, " ~~ ", sds[r] ^ 2, "*y", r, "\n",
+                     "y", r, " ~~ 0.3*", "y", r-1, "\n")
+    }
+  }
+    
+    # run simulateData() and save dataset into an object called 
+    # data.g*, where * is 1 for group 1 and so on...
+    assign("w.data",
+           simulateData(model = form,
+                        sample.nobs = grpsize
+           ))
+    
+    # add ID
+    w.data$ID <- 1:nrow(w.data)
+    
+    # convert w.data to wide
+    w.data <- pivot_longer(w.data, cols = c("y1","y2"))
+    
+  
+  # save the p-value of the main effect from the one-way ANOVA
+  anova.results <- Anova(lm(Y ~ X1,
+                            # use type II for now
+                            data = w.data), type = 2)[1,4]
+  
+  # if the p value is statistically significant, let sig = 1,
+  # else sig = 0
+  if (anova.results < alphalvl) {
+    sig <- 1
+  } else {
+    sig <- 0
+  }
+  
+  return(sig)
+}
+
+
+
+
 # description
     ## this function runs a single one-way ANOVA with the selected parameters.
 # inputs
