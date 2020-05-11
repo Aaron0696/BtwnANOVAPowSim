@@ -1,60 +1,3 @@
-# take note that group size is a constant now
-anova1way.within <- function(means, sds, grpsize, num.grp, alphalvl = 0.05){
-  
-  form <- ""
-  # this loop creates the arguments for simulateData()
-  # each iteration is simulates the data for one group
-  for (r in 1:num.grp) {
-    # create the model formula to be used in simulateData(model = ...)
-    # assign the model formula to an object called grp*.model,
-    # where * is 1 for group 1 and so on...
-    
-    if(r == 1){
-      form <- paste0(form, 
-                     "y", r, " ~ ", means[r], "*1",
-                     "\ny", r, " ~~ ", sds[r] ^ 2, "*y", r, "\n")
-      
-    } else {
-      form <- paste0(form, 
-                     "y", r, " ~ ", means[r], "*1",
-                     "\ny", r, " ~~ ", sds[r] ^ 2, "*y", r, "\n",
-                     "y", r, " ~~ 0.3*", "y", r-1, "\n")
-    }
-  }
-    
-    # run simulateData() and save dataset into an object called 
-    # data.g*, where * is 1 for group 1 and so on...
-    assign("w.data",
-           simulateData(model = form,
-                        sample.nobs = grpsize
-           ))
-    
-    # add ID
-    w.data$ID <- 1:nrow(w.data)
-    
-    # convert w.data to wide
-    w.data <- pivot_longer(w.data, cols = c("y1","y2"))
-    
-  
-  # save the p-value of the main effect from the one-way ANOVA
-  anova.results <- Anova(lm(Y ~ X1,
-                            # use type II for now
-                            data = w.data), type = 2)[1,4]
-  
-  # if the p value is statistically significant, let sig = 1,
-  # else sig = 0
-  if (anova.results < alphalvl) {
-    sig <- 1
-  } else {
-    sig <- 0
-  }
-  
-  return(sig)
-}
-
-
-
-
 # description
     ## this function runs a single one-way ANOVA with the selected parameters.
 # inputs
@@ -206,12 +149,13 @@ anova1way.sim <- function(means, sds, grpsize, num.grp){
 
 # for development
 # 2 x 3
-means <- c(1,1,2,2,3,3)
-sds <- c(1,1,1,1,1,1)
-grpsize <- c(50,50,40,40,30,30)
-iv1.lvl <- c(1:2)
-iv2.lvl <- c(1:3)
-alphalvl <- 0.05
+params <- list()
+params$means <- c(1,1,2,2)
+params$sds <- c(1,1,1,1)
+params$grpsize <- c(50,50,40,40)
+params$iv1.lvl <- c(1:2)
+params$iv2.lvl <- c(1:2)
+params$alpha <- 0.05
 
 # on hold
 
@@ -275,7 +219,3 @@ anova2way <- function(means, sds, grpsize, iv1.lvl, iv2.lvl, alphalvl = 0.05){
   
   return(data.frame(anova.results[,5:6]))
 }
-
-
-
-

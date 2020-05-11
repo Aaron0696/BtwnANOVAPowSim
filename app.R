@@ -93,11 +93,8 @@ ui <- fluidPage(
            wellPanel(
              
              radioButtons("numways", label = h3("ANOVA Design"),
-                          choices = list("One-Way Between-Subjects" = "B1", 
-                                         "One-Way Within-Subjects" = "R1", 
-                                         "Two-Way Between-Subjects" = "B2",
-                                         "Two-Way Within-Subjects" = "R2",
-                                         "Two-Way Mixed" = "M2"), 
+                          choices = list("One-Way Between-Subjects" = "B1",
+                                         "Two-Way Between-Subjects" = "B2"), 
                           selected = "B1"),
              
              numericInput("iter",label = h3("Number Of Iterations"), value = 100),
@@ -118,8 +115,26 @@ ui <- fluidPage(
       h4("Input the unstandardized means, standard deviations and condition sizes in the panels below. 
          Greater differences in means, smaller standard deviations and larger condition sizes will lead to greater power."),
       hr(),
-      uiOutput("numgrp.sel"),
-      uiOutput("cndparams"), 
+      
+      column(width = 6, conditionalPanel(condition = "input.numways == 'B2'",
+                                         wellPanel(textInput("iv1name", label = h3("First Independent Variable"), value = "X1"),
+                                                   uiOutput("numgrp.sel1"))),
+             conditionalPanel(condition = "input.numways == 'B2'",
+                              uiOutput("lvlnames1"))),
+      
+      column(width = 6, conditionalPanel(condition = "input.numways == 'B2'",
+                                         wellPanel(textInput("iv2name", label = h3("Second Independent Variable"), value = "X2"),
+                                                   uiOutput("numgrp.sel2"))),
+             conditionalPanel(condition = "input.numways == 'B2'",
+                              uiOutput("lvlnames2"))),
+      
+      conditionalPanel(condition = "input.numways == 'B1'",
+                       wellPanel(textInput("ivname", label = h3("First Independent Variable"), value = "X1"),
+                                 uiOutput("numgrp.sel"))),
+      conditionalPanel(condition = "input.numways == 'B1'",
+                       uiOutput("cndparams1")),
+      conditionalPanel(condition = "input.numways == 'B2'",
+                       uiOutput("cndparams2")),
       width = 7),
     column(
       # panel for the run button
@@ -162,37 +177,79 @@ server <- function(input, output) {
   
   output$numgrp.sel <- renderUI({
     
-    wellPanel(sliderInput("numcnds", label = h3("Number Of Conditions"), min = 2, max = 9, value = 2),
-    "The number of conditions in the independent variable possesses. Or the number of conditions you have in your design.")
-    
-    
+    sliderInput("numcnds", label = h3("Number Of Conditions/Levels"), min = 2, max = 9, value = 2)
   })
+  
+  output$numgrp.sel1 <- renderUI({
+    
+    sliderInput("numcnds1", label = h3("Number Of Conditions/Levels"), min = 2, max = 9, value = 2)
+  })
+  
+  output$lvlnames1 <- renderUI({
+    lapply(1:input$numcnds1, function(i) {
+      column(wellPanel(textInput(paste0("lvl1names", i), label = paste0("Level ", i, " Name"), value = "Input...")),
+                       width = 6) 
+    })
+  })
+  
+  output$numgrp.sel2 <- renderUI({
+    
+    sliderInput("numcnds2", label = h3("Number Of Conditions/Levels"), min = 2, max = 9, value = 2)
+  })
+  
+  output$lvlnames2 <- renderUI({
+    lapply(1:input$numcnds2, function(i) {
+      column(wellPanel(textInput(paste0("lvl2names", i), label = paste0("Level ", i, " Name"), value = "Input...")),
+             width = 6) 
+    })
+  })
+  
+  # output that lets user specify the names of the IVs
   
   
   # take number of conditions as input and
   # create dynamic UI that take means as input
-  output$cndparams <- renderUI({
-    
-    if (input$numways == "B1"|input$numways == "R1") {
-      
-      numcnds <- as.integer(input$numcnds)
-      lapply(1:numcnds, function(i) {
-        column(wellPanel(numericInput(paste0("g",i,"mean"),
-                                      label = paste0("Mean Of Condition ", i),
-                                      value = i/2),
-                         numericInput(paste0("g",i,"sd"),
-                                      label = paste0("SD Of Condition ", i),
-                                      value = 1),
-                         numericInput(paste0("g",i,"size"),
-                                      label = paste0("Size Of Condition ", i),
-                                      value = 50)), width = 3) 
+  
+    output$cndparams1 <- renderUI({
+        numcnds <- as.integer(input$numcnds)
+        lapply(1:numcnds, function(i) {
+          # header <- eval(parse(text = paste0("input$lvlnames", i)))
+          column(wellPanel(textInput(paste0("lvlnames", i), label = paste0("Level ", i, " Name"), value = "Input..."),
+                           numericInput(paste0("g",i,"mean"),
+                                        label = paste0("Mean"),
+                                        value = i/2),
+                           numericInput(paste0("g",i,"sd"),
+                                        label = paste0("SD"),
+                                        value = 1),
+                           numericInput(paste0("g",i,"size"),
+                                        label = paste0("Size"),
+                                        value = 50)), width = 4) 
+        })
+    })
+  
+    output$cndparams2 <- renderUI({
+      numcnds1 <- as.integer(input$numcnds1)
+      numcnds2 <- as.integer(input$numcnds2)
+      lapply(1:numcnds1, function(i) {
+        ######
+        lapply(1:numcnds2, function(r) {
+          
+          column(wellPanel(
+            h3(paste0(input$iv1name, ": ", eval(parse(text = paste0("input$lvl1names", i))))),
+            h3(paste0(input$iv2name, ": ", eval(parse(text = paste0("input$lvl2names", r))))),
+            
+            numericInput(paste0("g",i, r, "mean"),
+                                        label = paste0("Mean"),
+                                        value = i/2),
+                           numericInput(paste0("g",i, r, "sd"),
+                                        label = paste0("SD"),
+                                        value = 1),
+                           numericInput(paste0("g",i, r, "size"),
+                                        label = paste0("Size"),
+                                        value = 50)), width = 3)
+        })
       })
-    }
-    
-    
-    
-    
-  })
+    })
   
   # tracker is the object which will keep track of how many times the
   # main effect of X1 was statistically significant in the simulation
@@ -207,157 +264,35 @@ server <- function(input, output) {
   observeEvent(input$update,{
     params$iter <- input$iter
     params$numcnds <- input$numcnds
+    params$numcnds1 <- input$numcnds1
+    params$numcnds2 <- input$numcnds2
     params$seed <- input$seed
     params$alpha <- input$alphalevel
-    if(input$numcnds == 2){
-      params$g1mean <- input$g1mean
-      params$g2mean <- input$g2mean
-      params$g1sd <- input$g1sd
-      params$g2sd <- input$g2sd
-      params$g1size <- input$g1size
-      params$g2size <- input$g2size
+    params$ivname <- input$ivname
+    params$iv1name <- input$iv1name
+    params$iv2name <- input$iv2name
+    
+    
+    if (input$numways == "B1") {
+      for (r in 1:input$numcnds){
+        params[[paste0("g",r,"mean")]] <- input[[paste0("g",r,"mean")]]
+        params[[paste0("g",r,"sd")]] <- input[[paste0("g",r,"sd")]]
+        params[[paste0("g",r,"size")]] <- input[[paste0("g",r,"size")]]
+      }
     }
-    if(input$numcnds == 3){
-      params$g1mean <- input$g1mean
-      params$g2mean <- input$g2mean
-      params$g3mean <- input$g3mean
-      params$g1sd <- input$g1sd
-      params$g2sd <- input$g2sd
-      params$g3sd <- input$g3sd
-      params$g1size <- input$g1size
-      params$g2size <- input$g2size
-      params$g3size <- input$g3size
+    
+    if (input$numways == "B2") {
+      for (i in 1:input$numcnds1) {
+        
+        for (r in 1:input$numcnds2){
+          params[[paste0("g",i, r,"mean")]] <- input[[paste0("g",r,"mean")]]
+          params[[paste0("g",i, r,"sd")]] <- input[[paste0("g",r,"sd")]]
+          params[[paste0("g",i, r,"size")]] <- input[[paste0("g",r,"size")]]
+        }
+      }
     }
-    if(input$numcnds == 4){
-      params$g1mean <- input$g1mean
-      params$g2mean <- input$g2mean
-      params$g3mean <- input$g3mean
-      params$g4mean <- input$g4mean
-      params$g1sd <- input$g1sd
-      params$g2sd <- input$g2sd
-      params$g3sd <- input$g3sd
-      params$g4sd <- input$g4sd
-      params$g1size <- input$g1size
-      params$g2size <- input$g2size
-      params$g3size <- input$g3size
-      params$g4size <- input$g4size
-    }
-    if(input$numcnds == 5){
-      params$g1mean <- input$g1mean
-      params$g2mean <- input$g2mean
-      params$g3mean <- input$g3mean
-      params$g4mean <- input$g4mean
-      params$g5mean <- input$g5mean
-      params$g1sd <- input$g1sd
-      params$g2sd <- input$g2sd
-      params$g3sd <- input$g3sd
-      params$g4sd <- input$g4sd
-      params$g5sd <- input$g5sd
-      params$g1size <- input$g1size
-      params$g2size <- input$g2size
-      params$g3size <- input$g3size
-      params$g4size <- input$g4size
-      params$g5size <- input$g5size
-    }
-    if(input$numcnds == 6){
-      params$g1mean <- input$g1mean
-      params$g2mean <- input$g2mean
-      params$g3mean <- input$g3mean
-      params$g4mean <- input$g4mean
-      params$g5mean <- input$g5mean
-      params$g6mean <- input$g6mean
-      params$g1sd <- input$g1sd
-      params$g2sd <- input$g2sd
-      params$g3sd <- input$g3sd
-      params$g4sd <- input$g4sd
-      params$g5sd <- input$g5sd
-      params$g6sd <- input$g6sd
-      params$g1size <- input$g1size
-      params$g2size <- input$g2size
-      params$g3size <- input$g3size
-      params$g4size <- input$g4size
-      params$g5size <- input$g5size
-      params$g6size <- input$g6size
-      
-    }
-    if(input$numcnds == 7){
-      params$g1mean <- input$g1mean
-      params$g2mean <- input$g2mean
-      params$g3mean <- input$g3mean
-      params$g4mean <- input$g4mean
-      params$g5mean <- input$g5mean
-      params$g6mean <- input$g6mean
-      params$g7mean <- input$g7mean
-      params$g1sd <- input$g1sd
-      params$g2sd <- input$g2sd
-      params$g3sd <- input$g3sd
-      params$g4sd <- input$g4sd
-      params$g5sd <- input$g5sd
-      params$g6sd <- input$g6sd
-      params$g7sd <- input$g7sd
-      params$g1size <- input$g1size
-      params$g2size <- input$g2size
-      params$g3size <- input$g3size
-      params$g4size <- input$g4size
-      params$g5size <- input$g5size
-      params$g6size <- input$g6size
-      params$g7size <- input$g7size
-    }
-    if(input$numcnds == 8){
-      params$g1mean <- input$g1mean
-      params$g2mean <- input$g2mean
-      params$g3mean <- input$g3mean
-      params$g4mean <- input$g4mean
-      params$g5mean <- input$g5mean
-      params$g6mean <- input$g6mean
-      params$g7mean <- input$g7mean
-      params$g8mean <- input$g8mean
-      params$g1sd <- input$g1sd
-      params$g2sd <- input$g2sd
-      params$g3sd <- input$g3sd
-      params$g4sd <- input$g4sd
-      params$g5sd <- input$g5sd
-      params$g6sd <- input$g6sd
-      params$g7sd <- input$g7sd
-      params$g8sd <- input$g8sd
-      params$g1size <- input$g1size
-      params$g2size <- input$g2size
-      params$g3size <- input$g3size
-      params$g4size <- input$g4size
-      params$g5size <- input$g5size
-      params$g6size <- input$g6size
-      params$g7size <- input$g7size
-      params$g8size <- input$g8size
-    }
-    if(input$numcnds == 9){
-      params$g1mean <- input$g1mean
-      params$g2mean <- input$g2mean
-      params$g3mean <- input$g3mean
-      params$g4mean <- input$g4mean
-      params$g5mean <- input$g5mean
-      params$g6mean <- input$g6mean
-      params$g7mean <- input$g7mean
-      params$g8mean <- input$g8mean
-      params$g9mean <- input$g9mean
-      params$g1sd <- input$g1sd
-      params$g2sd <- input$g2sd
-      params$g3sd <- input$g3sd
-      params$g4sd <- input$g4sd
-      params$g5sd <- input$g5sd
-      params$g6sd <- input$g6sd
-      params$g7sd <- input$g7sd
-      params$g8sd <- input$g8sd
-      params$g9sd <- input$g9sd
-      params$g1size <- input$g1size
-      params$g2size <- input$g2size
-      params$g3size <- input$g3size
-      params$g4size <- input$g4size
-      params$g5size <- input$g5size
-      params$g6size <- input$g6size
-      params$g7size <- input$g7size
-      params$g8size <- input$g8size
-      params$g9size <- input$g9size
-    }
+    
+    
   })
   
   # power output
@@ -378,23 +313,46 @@ server <- function(input, output) {
       # loop repeating anova1way() with the chosen parameters for the number of
       # iterations specified by the user    
       set.seed(params$seed)
-      for(i in 1:params$iter){
-        tracker$NumSig[1] <- tracker$NumSig[1] + anova1way(means = eval(parse(text = meanform)), 
-                                                           sds = eval(parse(text = sdform)), 
-                                                           grpsize = eval(parse(text = sizeform)),
-                                                           num.grp = params$numcnds,
-                                                           alphalvl = params$alpha)
-      }
-      # save the number of iterations from params
-      tracker$NumIterations <- params$iter
-      # calculate power
-      tracker$Power <- tracker$NumSig / tracker$NumIterations
       
+      if(input$numways == "B1"){
+        for(i in 1:params$iter){
+          tracker$NumSig[1] <- tracker$NumSig[1] + anova1way(means = eval(parse(text = meanform)), 
+                                                             sds = eval(parse(text = sdform)), 
+                                                             grpsize = eval(parse(text = sizeform)),
+                                                             num.grp = params$numcnds,
+                                                             alphalvl = params$alpha)
+        }
+        
+        # save the number of iterations from params
+        tracker$NumIterations <- params$iter
+        # calculate power
+        tracker$Power <- tracker$NumSig / tracker$NumIterations
+        
+        # print text
+        print(paste0(params$iter, " iterations were simulated and ", 
+                     tracker$NumSig, " iterations had statistically significant main effects.",
+                     "\nThe simulated power for the overall main effect of ", params$ivname, " is ", tracker$Power, "."))
+      }
+      
+      if(input$numways == "B2"){
+        
+        anova2way(means = c(1,1,1,1),
+                  sds = c(1,1,1,1),
+                  grpsize = c(50,50,50,50),
+                  iv1.lvl = c(1:2),
+                  iv2.lvl = c(1:2),
+                  alphalvl = 0.05)
+        # anova2way(means = c(params$g11mean, params$g21mean,
+        #                     params$g12mean, params$g22mean),
+        #           sds = c(params$g11sd,params$g21sd,
+        #                     params$g12sd, params$g22sd),
+        #           grpsize = c(params$g11size,params$g21size,
+        #                               params$g12size, params$g22size),
+        #           iv1.lvl = c(1:params$numcnds1),
+        #           iv2.lvl = c(1:params$numcnds2),
+        #           alphalvl = params$alpha)
+      }
     }
-    # print text
-    print(paste0(params$iter, " iterations were simulated and ", 
-                 tracker$NumSig, " iterations had statistically significant main effects.",
-                 "\nThe simulated power for the overall main effect is ", tracker$Power, "."))
   })
   
   # plotly output
