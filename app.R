@@ -95,7 +95,7 @@ ui <- fluidPage(
              radioButtons("numways", label = h3("ANOVA Design"),
                           choices = list("One-Way Between-Subjects" = "B1",
                                          "Two-Way Between-Subjects" = "B2"), 
-                          selected = "B1"),
+                          selected = "B2"),
              
              numericInput("iter",label = h3("Number Of Iterations"), value = 100),
              "The option above determines the number of iteration for the simulation, please note that selecting 
@@ -117,13 +117,13 @@ ui <- fluidPage(
       hr(),
       
       column(width = 6, conditionalPanel(condition = "input.numways == 'B2'",
-                                         wellPanel(textInput("iv1name", label = h3("First Independent Variable"), value = "X1"),
+                                         wellPanel(textInput("iv1name", label = h3("First Independent Variable"), value = "IV1"),
                                                    uiOutput("numgrp.sel1"))),
              conditionalPanel(condition = "input.numways == 'B2'",
                               uiOutput("lvlnames1"))),
       
       column(width = 6, conditionalPanel(condition = "input.numways == 'B2'",
-                                         wellPanel(textInput("iv2name", label = h3("Second Independent Variable"), value = "X2"),
+                                         wellPanel(textInput("iv2name", label = h3("Second Independent Variable"), value = "IV2"),
                                                    uiOutput("numgrp.sel2"))),
              conditionalPanel(condition = "input.numways == 'B2'",
                               uiOutput("lvlnames2"))),
@@ -133,14 +133,16 @@ ui <- fluidPage(
                                  uiOutput("numgrp.sel"))),
       conditionalPanel(condition = "input.numways == 'B1'",
                        uiOutput("cndparams1")),
-      conditionalPanel(condition = "input.numways == 'B2'",
-                       uiOutput("cndparams2")),
+     fluidRow(conditionalPanel(condition = "input.numways == 'B2'",
+                       uiOutput("cndparams2"))),
       width = 7),
     column(
+      h2("Step Three: Run!"), 
+      hr(),
       # panel for the run button
       wellPanel(h3("All Done?"),
-                "Click Run! when you are satisfied with your settings and are ready to begin the simulation.
-                      The application may take a while so hang tight!",
+                h4("Click Run! when you are satisfied with your settings and are ready to begin the simulation.
+                      The application may take a while so hang tight!"),
                 hr(),
                 actionButton("update", label = "Run!", icon = icon("random")),
                 h4("Output will be generated below...")), width = 2)
@@ -148,28 +150,25 @@ ui <- fluidPage(
   hr(),
   fluidRow(
     column(
+      # text communicating the simulated power
+      conditionalPanel(condition = "input.update != 0",
+                       wellPanel(h3("Simulated Power"),
+                                 hr(),
+                       withSpinner(tableOutput("power"), 
+                                   size = getOption("spinner.size", default = 0.5),
+                                   proxy.height = "100px"))), 
+      offset = 3, width = 2),
+    column(
       # description for the graph
       conditionalPanel(condition = "input.update != 0",
-                       h3("The density plots approximates the population described by the chosen parameters."),
-                       h3("Power is maximized when the conditions overlap minimally, this can be achieved by selecting 
-                                   greater mean differences or lower standard deviations."),
-                       h3("Each condition is assigned a different color and X denotes the value of the mean."),
-                       h3("The simulated power will be reported below.")), 
+                       h3("The graph below visualizes the condition means as bars."), 
+                          h4("Doublecheck that the displayed means correspond to the values selected above and are the intended values."),
+                       plotOutput("graph")), 
       width = 4),
-    column(
-      # interactive graph
-      plotlyOutput("graph"), 
-      width = 8)
   ),
   hr(),
   fluidRow(
-    column(
-      # text communicating the simulated power
-      conditionalPanel(condition = "input.update != 0",
-                       withSpinner(verbatimTextOutput("power"), 
-                                   size = getOption("spinner.size", default = 0.5),
-                                   proxy.height = "100px")), 
-      offset = 0, width = 12))
+    )
 )
 
 
@@ -187,7 +186,7 @@ server <- function(input, output) {
   
   output$lvlnames1 <- renderUI({
     lapply(1:input$numcnds1, function(i) {
-      column(wellPanel(textInput(paste0("lvl1names", i), label = paste0("Level ", i, " Name"), value = "Input...")),
+      column(wellPanel(textInput(paste0("lvl1names", i), label = paste0("Level ", i, " Name"), value = paste(i))),
                        width = 6) 
     })
   })
@@ -199,7 +198,7 @@ server <- function(input, output) {
   
   output$lvlnames2 <- renderUI({
     lapply(1:input$numcnds2, function(i) {
-      column(wellPanel(textInput(paste0("lvl2names", i), label = paste0("Level ", i, " Name"), value = "Input...")),
+      column(wellPanel(textInput(paste0("lvl2names", i), label = paste0("Level ", i, " Name"), value = LETTERS[i])),
              width = 6) 
     })
   })
@@ -214,7 +213,7 @@ server <- function(input, output) {
         numcnds <- as.integer(input$numcnds)
         lapply(1:numcnds, function(i) {
           # header <- eval(parse(text = paste0("input$lvlnames", i)))
-          column(wellPanel(textInput(paste0("lvlnames", i), label = paste0("Level ", i, " Name"), value = "Input..."),
+          column(wellPanel(textInput(paste0("lvlnames", i), label = paste0("Level ", i, " Name"), value = LETTERS[i]),
                            numericInput(paste0("g",i,"mean"),
                                         label = paste0("Mean"),
                                         value = i/2),
@@ -285,9 +284,9 @@ server <- function(input, output) {
       for (i in 1:input$numcnds1) {
         
         for (r in 1:input$numcnds2){
-          params[[paste0("g",i, r,"mean")]] <- input[[paste0("g",r,"mean")]]
-          params[[paste0("g",i, r,"sd")]] <- input[[paste0("g",r,"sd")]]
-          params[[paste0("g",i, r,"size")]] <- input[[paste0("g",r,"size")]]
+          params[[paste0("g",i, r,"mean")]] <- input[[paste0("g",i, r,"mean")]]
+          params[[paste0("g",i, r,"sd")]] <- input[[paste0("g",i, r,"sd")]]
+          params[[paste0("g",i, r,"size")]] <- input[[paste0("g",i, r,"size")]]
         }
       }
     }
@@ -296,15 +295,8 @@ server <- function(input, output) {
   })
   
   # power output
-  output$power <- renderText({
-    
-    # creating the formulas to be parsed as arguments
-    meanform <- paste0("params$g", 1:params$numcnds, "mean", collapse = ",")
-    meanform <- paste0("c(", meanform, ")")
-    sdform <- paste0("params$g", 1:params$numcnds, "sd", collapse = ",")
-    sdform <- paste0("c(", sdform, ")")
-    sizeform <- paste0("params$g", 1:params$numcnds, "size", collapse = ",")
-    sizeform <- paste0("c(", sizeform, ")")
+  # put the if loop outside
+  output$power <- renderTable({
     
     # for the first time the run button is pressed, say loading
     if(input$update == 0){
@@ -315,11 +307,82 @@ server <- function(input, output) {
       set.seed(params$seed)
       
       if(input$numways == "B1"){
+        
+        tracker <- data.frame(Effect = c(params$ivname, 
+                                         "Error"),
+                              NumSig = 0)
+        
+        # creating the formulas to be parsed as arguments
+        meanform <- paste0("params$g", 1:params$numcnds, "mean", collapse = ",")
+        meanform <- paste0("c(", meanform, ")")
+        sdform <- paste0("params$g", 1:params$numcnds, "sd", collapse = ",")
+        sdform <- paste0("c(", sdform, ")")
+        sizeform <- paste0("params$g", 1:params$numcnds, "size", collapse = ",")
+        sizeform <- paste0("c(", sizeform, ")")
+        
         for(i in 1:params$iter){
-          tracker$NumSig[1] <- tracker$NumSig[1] + anova1way(means = eval(parse(text = meanform)), 
-                                                             sds = eval(parse(text = sdform)), 
+          tracker$NumSig <- tracker$NumSig + anova1way(means = eval(parse(text = meanform)),
+                                                             sds = eval(parse(text = sdform)),
                                                              grpsize = eval(parse(text = sizeform)),
                                                              num.grp = params$numcnds,
+                                                             alphalvl = params$alpha)
+          # tracker$NumSig <- tracker$NumSig + anova1way(means = c(1,2),
+          #                                              sds = c(1,1),
+          #                                              grpsize = c(50,50),
+          #                                              num.grp = 2,
+          #                                              alphalvl = 0.05)
+        }
+
+        # save the number of iterations from params
+        tracker$NumIterations <- params$iter
+        # calculate power
+        tracker$Power <- tracker$NumSig / tracker$NumIterations
+        tracker[,c(1,4)]
+      } else if(input$numways == "B2"){
+        
+        # tracker is the object which will keep track of how many times the
+        # main effect of X1 was statistically significant in the simulation
+        tracker <- data.frame(Effect = c(params$iv1name, 
+                                         params$iv2name, 
+                                        paste0(params$iv1name, "*", params$iv2name), 
+                                              "Error"),
+                              NumSig = 0)
+        
+        # creating the formulas to be parsed as arguments
+        meanform <- c()
+        for(r in 1:params$numcnds2){
+          for(i in 1:params$numcnds1){
+            meanform <- paste0(meanform, "params$g", i, r, "mean", ",")
+          }
+        }
+        meanform <- substr(meanform, start = 1, stop = nchar(meanform)-1)
+        meanform <- paste0("c(", meanform, ")")
+        
+        sdform <- c()
+        for(r in 1:params$numcnds2){
+          for(i in 1:params$numcnds1){
+            sdform <- paste0(sdform, "params$g", i, r, "sd", ",")
+          }
+        }
+        sdform <- substr(sdform, start = 1, stop = nchar(sdform)-1)
+        sdform <- paste0("c(", sdform, ")")
+        
+        sizeform <- c()
+        for(r in 1:params$numcnds2){
+          for(i in 1:params$numcnds1){
+            sizeform <- paste0(sizeform, "params$g", i, r, "size", ",")
+          }
+        }
+        sizeform <- substr(sizeform, start = 1, stop = nchar(sizeform)-1)
+        sizeform <- paste0("c(", sizeform, ")")
+        
+        
+        for(i in 1:params$iter){
+          tracker$NumSig <- tracker$NumSig + anova2way(means = eval(parse(text = meanform)),
+                                                             sds = eval(parse(text = sdform)),
+                                                             grpsize = eval(parse(text = sizeform)),
+                                                            iv1.lvl = 1:params$numcnds1,
+                                                       iv2.lvl = 1:params$numcnds2,
                                                              alphalvl = params$alpha)
         }
         
@@ -327,81 +390,110 @@ server <- function(input, output) {
         tracker$NumIterations <- params$iter
         # calculate power
         tracker$Power <- tracker$NumSig / tracker$NumIterations
-        
-        # print text
-        print(paste0(params$iter, " iterations were simulated and ", 
-                     tracker$NumSig, " iterations had statistically significant main effects.",
-                     "\nThe simulated power for the overall main effect of ", params$ivname, " is ", tracker$Power, "."))
-      }
-      
-      if(input$numways == "B2"){
-        
-        anova2way(means = c(1,1,1,1),
-                  sds = c(1,1,1,1),
-                  grpsize = c(50,50,50,50),
-                  iv1.lvl = c(1:2),
-                  iv2.lvl = c(1:2),
-                  alphalvl = 0.05)
-        # anova2way(means = c(params$g11mean, params$g21mean,
-        #                     params$g12mean, params$g22mean),
-        #           sds = c(params$g11sd,params$g21sd,
-        #                     params$g12sd, params$g22sd),
-        #           grpsize = c(params$g11size,params$g21size,
-        #                               params$g12size, params$g22size),
-        #           iv1.lvl = c(1:params$numcnds1),
-        #           iv2.lvl = c(1:params$numcnds2),
-        #           alphalvl = params$alpha)
+        tracker[,c(1,4)]
       }
     }
-  })
+  }, striped = TRUE,  
+  hover = TRUE, spacing = 'm',  
+  align = 'c',  
+  digits = 2)
   
   # plotly output
-  output$graph <- renderPlotly({
+  output$graph <- renderPlot({
     
-    # same as above
-    meanform <- paste0("params$g", 1:params$numcnds, "mean", collapse = ",")
-    meanform <- paste0("c(", meanform, ")")
-    sdform <- paste0("params$g", 1:params$numcnds, "sd", collapse = ",")
-    sdform <- paste0("c(", sdform, ")")
-    sizeform <- paste0("params$g", 1:params$numcnds, "size", collapse = ",")
-    sizeform <- paste0("c(", sizeform, ")")
+   # browser()
     
     # same as above, show blank graph before button is pressed
     if(input$update == 0){
       
-    } else {
-      # simulate data with 10,000 rows in each condition to approximate population
-      data <- anova1way.sim(means = eval(parse(text = meanform)), 
-                            sds = eval(parse(text = sdform)), 
-                            grpsize = rep(10000, params$numcnds),
-                            num.grp = params$numcnds)
-      names(data) <- c("Y", "condition")
-      myplot <- ggplot(data = data, aes(x = Y, fill = condition, label = condition)) + 
-        geom_density(alpha = 0.4, color = "black", size = 0.8)
-      # get numeric points used to plot density
-      plotdetails <- ggplot_build(myplot)
-      # get the maximum density of each condition
-      cndmax <- aggregate(ymax ~ group,
-                          data = plotdetails[["data"]][[1]],
-                          FUN = max)
-      # get the mean of each condition
-      cndmax$mean <- round(aggregate(Y ~ condition,
-                                     data = data,
-                                     FUN = mean)$Y, 2)
-      cndmax$group <- as.ordered(cndmax$group)
-      ggplotly(
-        ggplot() + 
-          geom_density(data = data, aes(x = Y, fill = condition), alpha = 0.7, size = 0.8) + 
-          geom_point(data = cndmax, aes(x = mean, y = 0.5, fill = group), color = "violetred", size = 6, shape = 4) + 
-          ylim(c(0,NA)) +  
-          ylab("Density") +
-          xlab("Y") +
-          theme_classic() + 
-          theme(axis.title.y = element_text(size = 11),
-                axis.title.x = element_text(size = 12))
-        # make hovertext only show condition information
-        , tooltip = c("fill")) %>%
-        layout(legend = list(orientation = "h", y = 1.2))
+    } else if(input$numways == "B1"){
+      # same as above
+      meanform <- paste0("params$g", 1:params$numcnds, "mean", collapse = ",")
+      meanform <- paste0("c(", meanform, ")")
+      sdform <- paste0("params$g", 1:params$numcnds, "sd", collapse = ",")
+      sdform <- paste0("c(", sdform, ")")
+      sizeform <- paste0("params$g", 1:params$numcnds, "size", collapse = ",")
+      sizeform <- paste0("c(", sizeform, ")")
+      
+      # formula for IV1 and IV2
+      text1 <- c()
+      for(i in 1:params$numcnds){
+        text1 <- c(text1, eval(parse(text = paste0("input$lvlnames", i))))
+      }
+      
+      aggre <- data.frame(Mean = eval(parse(text = meanform)),
+                          SD = eval(parse(text = sdform)),
+                          IV1 = text1)
+      
+      
+      ggplot(data = aggre, aes(x = IV1, y = Mean, label = SD)) + 
+        geom_bar(stat = "identity", position = position_dodge(), fill = "violetred") +
+        theme_classic() + 
+        theme(axis.title.y = element_text(size = 20),
+              axis.title.x = element_text(size = 20),
+              axis.text = element_text(size = 18),
+              legend.text = element_text(size = 20),
+              legend.title = element_text(size = 20)) + 
+        xlab(params$ivname)
+      
+      
+    } else if(input$numways == "B2"){
+      # creating the formulas to be parsed as arguments
+      meanform <- c()
+      for(r in 1:params$numcnds2){
+        for(i in 1:params$numcnds1){
+          meanform <- paste0(meanform, "params$g", i, r, "mean", ",")
+        }
+      }
+      meanform <- substr(meanform, start = 1, stop = nchar(meanform)-1)
+      meanform <- paste0("c(", meanform, ")")
+      
+      sdform <- c()
+      for(r in 1:params$numcnds2){
+        for(i in 1:params$numcnds1){
+          sdform <- paste0(sdform, "params$g", i, r, "sd", ",")
+        }
+      }
+      sdform <- substr(sdform, start = 1, stop = nchar(sdform)-1)
+      sdform <- paste0("c(", sdform, ")")
+      
+      sizeform <- c()
+      for(r in 1:params$numcnds2){
+        for(i in 1:params$numcnds1){
+          sizeform <- paste0(sizeform, "params$g", i, r, "size", ",")
+        }
+      }
+      sizeform <- substr(sizeform, start = 1, stop = nchar(sizeform)-1)
+      sizeform <- paste0("c(", sizeform, ")")
+      
+      # formula for IV1 and IV2
+      text1 <- c()
+        for(i in 1:params$numcnds1){
+          text1 <- c(text1, eval(parse(text = paste0("input$lvl1names", i))))
+        }
+      
+      text2 <- c()
+      for(i in 1:params$numcnds2){
+        text2 <- c(text2, rep(eval(parse(text = paste0("input$lvl2names", i))),
+                              params$numcnds1))
+      }
+      
+      aggre <- data.frame(Mean = eval(parse(text = meanform)),
+                          SD = eval(parse(text = sdform)),
+                          IV1 = text1,
+                          IV2 = text2)
+      
+      
+     ggplot(data = aggre, aes(x = IV1, y = Mean, fill = IV2, label = SD)) + 
+        geom_bar(stat = "identity", position = position_dodge()) +
+        theme_classic() + 
+        theme(axis.title.y = element_text(size = 20),
+              axis.title.x = element_text(size = 20),
+              axis.text = element_text(size = 18),
+              legend.text = element_text(size = 20),
+              legend.title = element_text(size = 20)) + 
+          xlab(params$iv1name) + 
+          labs(fill = params$iv2name)
     }
   })
 }

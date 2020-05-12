@@ -66,7 +66,7 @@ anova1way <- function(means, sds, grpsize, num.grp, alphalvl = 0.05){
     sig <- 0
   }
   
-  return(sig)
+  return(c(sig,NA))
 }
 
 # description
@@ -217,5 +217,57 @@ anova2way <- function(means, sds, grpsize, iv1.lvl, iv2.lvl, alphalvl = 0.05){
   anova.results$Effects <- rownames(anova.results)
   anova.results$sig <- ifelse(anova.results$`Pr(>F)` < 0.05, 1, 0)
   
-  return(data.frame(anova.results[,5:6]))
+  return(data.frame(anova.results[,6]))
+}
+
+anova2way.sim <- function(means, sds, grpsize, iv1.lvl, iv2.lvl){
+  
+  # get number of groups
+  num.grp <- length(iv1.lvl) * length(iv2.lvl)
+  # index for looping through means, sds and grpsize
+  j <- 1
+  
+  # this loop creates the arguments for simulateData()
+  # each iteration simulates the data for one group
+  for (r in iv2.lvl) {
+    # create the model formula to be used in simulateData(model = ...)
+    # assign the model formula to an object called grp**.model,
+    # where ** is 11 for group11, with condition 1 for iv1 and 
+    # condition 1 for iv2 and so on...
+    for (i in iv1.lvl) {
+      assign(paste0("grp", i, r, ".model"),
+             paste0("y ~ ", means[j], "*1", 
+                    "\n y ~~ ", sds[j] ^ 2, "*y"),
+             envir = .GlobalEnv)
+      
+      # run simulateData() and save dataset into an object called 
+      # data.g*, where * is 1 for group 1 and so on...
+      assign(paste0("data.g", i, r),
+             simulateData(eval(parse(
+               text = paste0("grp", i, r, ".model")
+             )),
+             sample.nobs = grpsize[j]
+             ))
+      
+      j <- j + 1
+    }
+  }
+  
+  # retrieve names of all objects in the environment starting with data.g
+  alldata.obs <- ls(pattern = "^data.g")
+  
+  alldat <- data.frame()
+  for (r in alldata.obs){
+    
+    assign(r,
+           data.frame(y = eval(parse(text = r)),
+                      IV1 = paste("Level", substr(r, str_locate(r,"[1-9]")[1,1], str_locate(r,"[1-9]")[1,1])),
+                      IV2 = paste("Level", substr(r, str_locate(r,"[1-9][1-9]")[1,2], str_locate(r,"[1-9][1-9]")[1,2]))))
+    alldat <- rbind(alldat, eval(parse(text = r)))
+  }
+  
+  alldat$IV1 <- factor(alldat$IV1)
+  alldat$IV2 <- factor(alldat$IV2)
+  
+  return(alldat)
 }
