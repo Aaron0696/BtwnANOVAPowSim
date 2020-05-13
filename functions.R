@@ -121,5 +121,34 @@ anova2way <- function(means, sds, grpsize, iv1.lvl, iv2.lvl, alphalvl = 0.05){
              ))
       j <- j + 1
     }
-  return(sig)
+  }
+  
+  # retrieve names of all objects in the environment starting with data.g
+  alldata.obs <- ls(pattern = "^data.g")
+  # empty dataframe to be filled
+  alldat <- data.frame()
+  # for each data.g** object
+  for (r in alldata.obs){
+    assign(r,
+           data.frame(y = eval(parse(text = r)),
+                      # makes the string "Level *" by locatng the position in data.g** where the string is
+                      IV1 = paste("Level", substr(r, str_locate(r,"[1-9]")[1,1], str_locate(r,"[1-9]")[1,1])),
+                      # makes the string "Level *"
+                      IV2 = paste("Level", substr(r, str_locate(r,"[1-9][1-9]")[1,2], str_locate(r,"[1-9][1-9]")[1,2]))))
+    alldat <- rbind(alldat, eval(parse(text = r)))
+  }
+  
+  alldat$IV1 <- factor(alldat$IV1)
+  alldat$IV2 <- factor(alldat$IV2)
+  
+  # used for diagnostics
+  # xtabs(~ IV1 + IV2, data = alldat)
+  
+  # save the p-value of the main effect from the one-way ANOVA
+  anova.results <- Anova(lm(y ~ IV1*IV2,
+                            # use type II
+                            data = alldat), type = 2)
+  anova.results$Effects <- rownames(anova.results)
+  anova.results$sig <- ifelse(anova.results$`Pr(>F)` < 0.05, 1, 0)
+  return(data.frame(anova.results[,6]))
 }

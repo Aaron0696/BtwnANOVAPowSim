@@ -47,42 +47,43 @@ source("functions.R")
 # making UI ---------------------------------------------------------------
 ui <- fluidPage(
   # select theme
-  theme = shinytheme("lumen"),
+  theme = shinytheme("flatly"),
   # title
   titlePanel(h1("Fully-Between ANOVA Power Simulator"),
              windowTitle = "FBA_PowerSim"),
   # description and introduction
   fluidRow(
     column(
-      wellPanel("This is a personal project for myself and it is essentially a power simulator for One-Way ANOVAs.",
+      wellPanel(h3("Brief Description"),
+        "This is a power simulator for Between-Subject ANOVAs and it is a personal project for myself to test my R and Shiny skills.",
                 br(),
-                "In experiments, power is usually defined as the probability that an effect 
-                      would be statistically significant given that the effect truly exists.",
+                tags$blockquote(strong("Power"), "is defined as the probability that an effect would be statistically significant, given that the effect truly exists in the population."),
+                "There are existing power calculators that uses mathematical formulas to calculate power 
+                but these formulas make certain assumptions about the samples and population.",
                 br(),
-                "There are formulas to calculate power but these formulas assume that certain assumptions are met.
-                      A less restrictive approach to calculating power is to draw a sample from a known population where the effect is present,
-                      test the hypothesis and repeat this multiple times (iterations). Count the relative frequency that a statistically significant effect
-                      was observed and that is power.",
+                "Another less restrictive approach to calculating power is to simulate (repeatedly) the drawing of samples from a known population where the effect exist.",
+                tags$ul(
+                  tags$li("For each sample, test the hypothesis. Each sample is an iteration."), 
+                  tags$li("Power is the proportion of iterations that produced a statistically significant results.")
+                ),
+                "For example,",
+                tags$ul(
+                  tags$li("I generate 1000 samples, each sample contains 100 subjects, from a population where males have shorter hair compared to females."),
+                  tags$li("In each sample, I use an ANOVA to determine if there is any mean diferences in hair length between males and females"),
+                  tags$li("If 800 out of the 1000 iterations produced a statistically significant main effect of gender, the simulated power would be 0.8.")
+                  ),
+                "The limitations to this simulation-based approach is that an intermediate level of scripting is needed to implement this,
+                      which may gatekeep beginner users from accessing this technique.",
                 br(),
-                "For example, I generated samples of n = 100 each while assuming that the effect existed.
-                      If 600 out of 1000 iterations produced a statistically significant effect,
-                      my estimated power would be 0.6.",
+                      "This RShiny was created to allow users of all scripting level to access to such simulations, without the daunting task of writing complicated scripts.",
                 br(),
-                "The downside to this simulation-based approach is that an intermediate level of scripting is needed,
-                      which may gatekeep users from accessing this technique. This RShiny was created to allow users of
-                      all scripting level to perform such simulations.",
-                br(),
-                tags$code("For those who are seeing this now, I am still testing things out, so if there are any comments on how 
-                        it can be further improved (aesthetics, features, user-experience, bugs), do tell me. 
-                        I plan to extend this to include Two-Way ANOVAs and Multiple Regression once I got the bugs, features and aesthetics down.")
       ),
-      width = 10),
+      width = 7, offset = 0),
     column(
-      wellPanel(h4("Access the codes on "),
-                h4(tags$a(href = "https://github.com/Aaron0696/PowerPsych", "Github")),
-                h4(" or connect with me on "),
-                h4(tags$a(href = "https://www.linkedin.com/in/aaron-lim-b30898135/", "LinkedIn."))),
-      width = 2)
+      wellPanel(h4("Access the codes on ", tags$a(href = "https://github.com/Aaron0696/BtwnANOVAPowSim", "Github.")),
+                h4("Connect with me on ", tags$a(href = "https://www.linkedin.com/in/aaron-lim-b30898135/", "LinkedIn.")),
+                h4("Leave feedback or comments anonymously on", tags$a(href = "https://forms.gle/LyZb3H64ZfwhKjcZ9", "Google Forms."))),
+      width = 4)
     ),
   
   hr(),
