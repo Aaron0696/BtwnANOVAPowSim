@@ -76,7 +76,7 @@ This is the alpha value used for significance testing, defaults to p = 0.05 as p
 
 The next step is inputting the population parameters for the simulation. 
 
-![](./pictures/step2_1.png)
+<img src="./pictures/step2_1.png" alt="step2_1.jpg" width="700" height="400"/>
 
 ### Selecting Number Of Levels 
 
@@ -86,7 +86,7 @@ Next, you get to name the levels in the panels below. These panels are reactive,
 
 As an example, imagine that I am conducting an experiment where the first independent variable is Attention with two levels, the first level is undivided attention while the second level is divided attention. The second independent variable is Difficulty (of the task) with three levels: Easy, Medium and Hard.
 
-![](./pictures/step2_2.png)
+<img src="./pictures/step2_2.png" alt="step2_2.jpg" width="700" height="400"/>
 
 Scroll further down to the next section in the app.
 
@@ -94,19 +94,19 @@ Scroll further down to the next section in the app.
 
 The user should see a series of panels:
 
-![](./pictures/step2_3.png)
+<img src="./pictures/step2_3.png" alt="step2_3.jpg" width="700" height="600"/>
 
 Notice that the names of the panel correspond to what the user inputs. These panels are reactive as well, their titles would reflect the names that were selected above. The number of panels are also equal to the product of the number of levels of the first and second independent variable.
 
 For each panel, input what you think the population mean and standard deviation is for the chosen condition, keeping in mind your dependent variable. Also, the expected sample size for each condition that you plan to collect. Imagine my dependent variable was reaction time measured in milliseconds. My fictional literature review suggested that the values for these conditions are as such, plus I intend to collect 50 per condition for a respectable total sample size of 300:
 
-![](./pictures/step2_4.png)
+<img src="./pictures/step2_4.png" alt="step2_4.jpg" width="700" height="600"/>
 
 ## Step Three: Run
 
 To the right is the run button, which will begin the simulation when pressed. The output will appear further down.
 
-![](./pictures/step2_5.png)
+<img src="./pictures/step3.png" alt="step3.jpg" width="200" height="300"/>
 
 ## Output
 
