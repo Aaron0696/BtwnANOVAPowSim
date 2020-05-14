@@ -57,7 +57,7 @@ ui <- fluidPage(
       wellPanel(h3("Brief Description"),
         "This is a power simulator for Between-Subject ANOVAs and it is a personal project for myself to test my R and Shiny skills.",
                 br(),
-                tags$blockquote(strong("Power"), "is defined as the probability that an effect would be statistically significant, given that the effect truly exists in the population."),
+                tags$blockquote(strong("Power"), "is defined as the probability that an effect would be statistically significant (in a collected sample), given that the effect truly exists in the population."),
                 "There are existing power calculators that uses mathematical formulas to calculate power 
                 but these formulas make certain assumptions about the samples and population.",
                 br(),
@@ -82,7 +82,10 @@ ui <- fluidPage(
     column(
       wellPanel(h4("Access the codes on ", tags$a(href = "https://github.com/Aaron0696/BtwnANOVAPowSim", "Github.")),
                 h4("Connect with me on ", tags$a(href = "https://www.linkedin.com/in/aaron-lim-b30898135/", "LinkedIn.")),
-                h4("Leave feedback or comments anonymously on", tags$a(href = "https://forms.gle/LyZb3H64ZfwhKjcZ9", "Google Forms."))),
+                h4("Leave feedback or comments anonymously on", tags$a(href = "https://forms.gle/LyZb3H64ZfwhKjcZ9", "Google Forms.")),
+                h4("To run the application on your local machine, use R and install the ", tags$code('shiny'), "package."),
+                h4("Run this command directly from the console:"),
+                h4(tags$code('shiny::runGitHub("BtwnANOVAPowSim", "Aaron0696")'))),
       width = 4)
     ),
   
@@ -120,7 +123,7 @@ ui <- fluidPage(
       h2("Step Two: Condition Parameters"),
       
       hr(),
-      h4("Input the unstandardized means, standard deviations and condition sizes in the panels below. 
+      h4("Input the expected ", tags$em("population"), " unstandardized means, ", tags$em("population"), " standard deviations and expected condition sample sizes in the panels below. 
          Greater differences in means, smaller standard deviations and larger condition sizes will lead to greater power."),
       hr(),
       
@@ -276,13 +279,13 @@ server <- function(input, output) {
                     label = paste0("Level ", i, " Name"), 
                     value = LETTERS[i]),
           numericInput(paste0("g",i,"mean"),
-                       label = paste0("Mean"),
+                       label = paste0("Population Mean"),
                        value = i/2),
           numericInput(paste0("g",i,"sd"),
-                       label = paste0("SD"),
+                       label = paste0("Population SD"),
                        value = 1),
           numericInput(paste0("g",i,"size"),
-                       label = paste0("Size"),
+                       label = paste0("Condtion Size"),
                        value = 50)), width = 4) 
     })
   })
@@ -300,13 +303,13 @@ server <- function(input, output) {
             h3(paste0(input$iv2name, ": ", eval(parse(text = paste0("input$lvl2names", r))))),
             
             numericInput(paste0("g",i, r, "mean"),
-                         label = paste0("Mean"),
+                         label = paste0("Population Mean"),
                          value = i/2),
             numericInput(paste0("g",i, r, "sd"),
-                         label = paste0("SD"),
+                         label = paste0("Population SD"),
                          value = 1),
             numericInput(paste0("g",i, r, "size"),
-                         label = paste0("Size"),
+                         label = paste0("Condition Size"),
                          value = 50)), width = 3)
       })
     })
