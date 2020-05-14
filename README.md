@@ -10,8 +10,8 @@ This is a personal project to consoliate and apply my knowledge in making R Shin
 
 The app has two purpose:
 
-* Education: Users can play and experiment with the different combination of parameters, noting their effect on the simulated power.
-* Research: Users can input the expected population values and expected sample sizes to obtain a simulated power to guide their research design. Population values can be derived from existing studies, meta-analysis or even expert knowledge/experience.
+* **Education**: Users can play and experiment with the different combination of parameters, noting their effect on the simulated power.
+* **Research**: Users can input the expected population values and expected sample sizes to obtain a simulated power to guide their research design. Population values can be derived from existing studies, meta-analysis or even expert knowledge/experience.
 
 ...while allowing users to easily run simulations without extensive scripting knowledge and experiencing much pain in the process.
 
