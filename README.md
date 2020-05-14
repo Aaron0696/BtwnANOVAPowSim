@@ -126,7 +126,7 @@ Just for fun, imagine I want to be lazy and only collect half the intended sampl
 
 ## Limitations and Future Directions
 
-Some limitations and future directions for improving this app but not implemented due to constraints on my end. But do give feedback if you think that certain prospects will be useful or interesting! I created a google forms for anonymized feedback at https://forms.gle/DtFMw23xbA8Y8n4E9, where you can share your opinions or suggestions for the app!
+Some limitations and future directions for improving this app but not implemented due to constraints on my end. But do give feedback if you think that certain prospects will be useful or interesting! I created a google forms for anonymized feedback at https://forms.gle/DtFMw23xbA8Y8n4E9, where you can share your bugs, opinions or suggestions for the app!
 
 * Extension to include power simulation for post-hoc tests.
 * Extension to include repeated measures ANOVA, mixed ANOVA, regression and other analysis.
