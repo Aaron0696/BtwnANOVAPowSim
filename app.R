@@ -80,7 +80,7 @@ ui <- fluidPage(
       ),
       width = 7, offset = 0),
     column(
-      wellPanel(h4("Access the codes on ", tags$a(href = "https://github.com/Aaron0696/BtwnANOVAPowSim", "Github.")),
+      wellPanel(h4("Access the README and codes on ", tags$a(href = "https://github.com/Aaron0696/BtwnANOVAPowSim", "Github.")),
                 h4("Connect with me on ", tags$a(href = "https://www.linkedin.com/in/aaron-lim-b30898135/", "LinkedIn.")),
                 h4("Leave feedback or comments anonymously on", tags$a(href = "https://forms.gle/LyZb3H64ZfwhKjcZ9", "Google Forms.")),
                 h4("To run the application on your local machine, use R and install the ", tags$code('shiny'), "package."),
@@ -535,6 +535,15 @@ server <- function(input, output) {
                           SD = eval(parse(text = sdform)),
                           IV1 = text1,
                           IV2 = text2)
+      
+      # formula for converting IV2 into a factor with the correct levels
+      text2.1 <- c()
+      for(i in 1:params$numcnds2){
+        text2.1 <- c(text2.1, eval(parse(text = paste0("input$lvl2names", i))))
+      }
+      # change levels to the correct order
+      aggre$IV2 <- factor(aggre$IV2,
+                          levels = text2.1)
 
       ggplot(data = aggre, aes(x = IV1, y = Mean, fill = IV2, label = SD)) + 
         geom_bar(stat = "identity", position = position_dodge()) +

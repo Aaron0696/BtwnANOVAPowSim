@@ -112,4 +112,23 @@ To the right is the run button, which will begin the simulation when pressed. Th
 
 The output may take awhile to load but it should look like this:
 
+<img src="./pictures/output.png" alt="output.jpg" width="650" height="400"/>
 
+On the left is the simulated power, presented in a table. Each row corresponds to one effect, for the 2 x 3 ANOVA, there are three effects, the main effect of Attention and Difficulty, and the interaction effect between the two.
+
+We can see that we have fairly good power for each of the effects, hovering around 0.8 power.
+
+The graph is a visual representation of the population means for each condition, which acts as a way for users to doublecheck if they have imputted the intended values correctly.
+
+Just for fun, let me half the condition sizes to 25 each and compare the drop in power. Notice that the power drops substantially for all effects.
+
+<img src="./pictures/output2.png" alt="output2.jpg" width="650" height="400"/>
+
+## Limitations and Future Directions
+
+Some limitations and possible future directions for improving this app but not implemented due to constraints on my end. But do feedback if you think that certain prospects will be useful or interesting! I created a google forms for anonymized feedback at https://forms.gle/DtFMw23xbA8Y8n4E9.
+
+* Extension to include power simulation for post-hoc tests.
+* Extension to include repeated measures ANOVA, mixed ANOVA, regression and other analysis.
+* Extension to include three-way designs.
+* Allowing more parameters to be manipulated, such as skewness and kurtosis.
