@@ -52,7 +52,7 @@ Further down the app are settings that require the user's input. We begin with t
 
 There are four options here for the users to select.
 
-![](./pictures/step1.png)
+<img src="./pictures/step1.png" alt="step1.jpg" width="300" height="500"/>
 
 ### ANOVA Design
 
@@ -98,12 +98,18 @@ The user should see a series of panels:
 
 Notice that the names of the panel correspond to what the user inputs. These panels are reactive as well, their titles would reflect the names that were selected above. The number of panels are also equal to the product of the number of levels of the first and second independent variable.
 
-For each panel, input what you think the population mean and standard deviation is for the chosen condition, keeping in mind your dependent variable. Also, the expected sample size for each condition that you plan to collect. Imagine my dependent variable was reaction time measured in milliseconds. My fictional literature review suggested that the values for these conditions are as such:
+For each panel, input what you think the population mean and standard deviation is for the chosen condition, keeping in mind your dependent variable. Also, the expected sample size for each condition that you plan to collect. Imagine my dependent variable was reaction time measured in milliseconds. My fictional literature review suggested that the values for these conditions are as such, plus I intend to collect 50 per condition for a respectable total sample size of 300:
 
 ![](./pictures/step2_4.png)
 
 ## Step Three: Run
 
+To the right is the run button, which will begin the simulation when pressed. The output will appear further down.
+
+![](./pictures/step2_5.png)
+
 ## Output
+
+The output may take awhile to load but it should look like this:
 
 
