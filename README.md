@@ -3,10 +3,12 @@
 > Implementing a simulation-approach to calculating power in R Shiny.
 
 ## Introduction
-This is a personal project to consoliate and apply my knowledge in making R Shiny apps. The app provides a *user-friendly* platform for users to simulate power while adjusting various parameters that are usually constrained by assumptions when using formulas. For power calculation using formulas, I highly recommend Gpower, more information at https://stats.idre.ucla.edu/other/gpower/.
+This is a personal project to consoliate and apply my knowledge in making R Shiny apps. The app provides a *user-friendly* platform for users to simulate power while adjusting various parameters that are usually constrained by assumptions when using formulas.
 
 * For example, users can select different variances for each condition, whereas typical power calculation assumes that variances are similar across conditions.
 * Users can also allow different groups to have different sample sizes to ascertain the effect of unequal group sizes.
+
+For power calculation using formulas, I highly recommend Gpower, more information at https://stats.idre.ucla.edu/other/gpower/.
 
 The app has two purpose:
 
