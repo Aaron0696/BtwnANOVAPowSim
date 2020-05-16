@@ -26,7 +26,7 @@ Power is a concept that was taught in my first statistical course in Psychology.
 
 There are a large number of resources which talk about power, its importance and determinants so I will not elaborate much on it here.
 
-## Power Calculation and Simulation
+## Power Calculation And Simulation
 Typically, power is estimated using formulas. This is the primary approach implemented in most power calculators. But these formulas make assumptions about the sample and the population. Which may not be realistic in some research settings. For example, the assumption of equal variances, which assumes that the variance in each condition is equal. The assumption of equal group sizes, which may not hold if one of the independent variables cannot be manipulated (e.g. gender).
 
 In contrast, this app simulates power instead of using formulas. The logic of the simulation goes like this.
@@ -55,9 +55,7 @@ The `shiny` package and github are integrated, such that users can run the app b
 shiny::runGitHub("BtwnANOVAPowSim", "Aaron0696")
 ```
 
-The title and description of the app should appear:
-
-![](./pictures/appIntro.png)
+The title and description of the app should appear.
 
 ## Step One: General Settings
 
