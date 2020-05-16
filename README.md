@@ -51,7 +51,7 @@ https://aaron0696.shinyapps.io/BtwnANOVAPowSim/
 
 The `shiny` package and github are integrated, such that users can run the app by using the following command after installing the `shiny` package.
 
-```{r}
+```R
 shiny::runGitHub("BtwnANOVAPowSim", "Aaron0696")
 ```
 
