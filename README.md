@@ -63,7 +63,7 @@ Further down the app are settings that require the user's input. We begin with t
 
 There are four options here for the users to select.
 
-<img src="./pictures/step1.png" alt="step1.jpg" width="300" height="500"/>
+<img src="./pictures/step1.png" alt="step1.jpg" width="300" height="520"/>
 
 ### ANOVA Design
 
@@ -87,7 +87,7 @@ This is the alpha value used for significance testing, defaults to 0.05 as per c
 
 The next step is inputting the **population parameters** for the simulation. 
 
-<img src="./pictures/step2_1.png" alt="step2_1.jpg" width="700" height="400"/>
+<img src="./pictures/step2_1.png" alt="step2_1.jpg" width="689" height="400"/>
 
 ### Selecting Number Of Levels 
 
@@ -97,7 +97,7 @@ Next, you get to name the levels in the panels below. These panels are reactive,
 
 As an example, imagine that I am conducting an experiment where the first independent variable is **Attention** with two levels, the first level is *undivided attention* while the second level is *divided attention*. The second independent variable is **Difficulty** (of the task) with three levels: *Easy*, *Medium* and *Hard*.
 
-<img src="./pictures/step2_2.png" alt="step2_2.jpg" width="700" height="400"/>
+<img src="./pictures/step2_2.png" alt="step2_2.jpg" width="692" height="400"/>
 
 Scroll further down to the next section in the app.
 
@@ -105,25 +105,25 @@ Scroll further down to the next section in the app.
 
 The user should see a series of panels:
 
-<img src="./pictures/step2_3.png" alt="step2_3.jpg" width="700" height="600"/>
+<img src="./pictures/step2_3.png" alt="step2_3.jpg" width="722" height="600"/>
 
 Notice that the name in the panel corresponds to the user input. These panels are reactive, their titles would reflect the names that were selected above. The number of panels are also equal to the product of the number of levels of the first and second independent variable.
 
 For each panel, input what you think the population mean and standard deviation is for the chosen condition. Also input the expected sample size for each condition that you plan to collect. Imagine my dependent variable was reaction time, measured in milliseconds. My fictional literature review suggested that the values for these conditions are as such, I also intend to collect 50 subjects per condition for a respectable total sample size of 300:
 
-<img src="./pictures/step2_4.png" alt="step2_4.jpg" width="700" height="600"/>
+<img src="./pictures/step2_4.png" alt="step2_4.jpg" width="724" height="600"/>
 
 ## Step Three: Run
 
 The `run` button is on the right of the app, which will begin the simulation when pressed. The output will appear further down.
 
-<img src="./pictures/step3.png" alt="step3.jpg" width="200" height="300"/>
+<img src="./pictures/step3.png" alt="step3.jpg" width="194" height="300"/>
 
 ## Output
 
 The output may take awhile to load but it should look like this:
 
-<img src="./pictures/output.png" alt="output.jpg" width="650" height="400"/>
+<img src="./pictures/output.png" alt="output.jpg" width="684" height="400"/>
 
 On the left is the simulated power, presented in a table. Each row corresponds to one effect, for the 2 x 3 ANOVA, there are three effects, the main effect of Attention and Difficulty, and the interaction effect between the two.
 
@@ -133,7 +133,7 @@ The graph is a visual representation of the population means for each condition,
 
 Just for fun, imagine I want to be lazy and only collect half the intended sample. I half the condition sizes to 25 each and compare the drop in power. Notice that the power drops substantially for all effects and I might want to think twice about collecting less.
 
-<img src="./pictures/output2.png" alt="output2.jpg" width="650" height="400"/>
+<img src="./pictures/output2.png" alt="output2.jpg" width="682" height="400"/>
 
 ## Limitations and Future Directions
 

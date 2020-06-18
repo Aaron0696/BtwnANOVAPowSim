@@ -43,7 +43,6 @@ library(stringr)
 # containts anova1way() and anova2way()
 source("functions.R")
 
-
 # making UI ---------------------------------------------------------------
 ui <- fluidPage(
   # select theme
@@ -215,7 +214,6 @@ ui <- fluidPage(
   hr(),
 )
 
-
 # making server ------------------------------------------------------------------
 server <- function(input, output) {
   # ui for selecting number of groups/levels for 1 way
@@ -245,7 +243,6 @@ server <- function(input, output) {
         width = 6)
     })
   })
-  
   
   # ui for inputing the number of the groups/levels for 2 way, second IV
   output$numgrp.sel2 <- renderUI({
